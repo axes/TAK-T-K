@@ -1,22 +1,22 @@
 export const GAME_CONFIG = {
-  width: 1024,
-  height: 900,
+  width: 1366,
+  height: 768,
   backgroundColor: '#0d0d0f',
   parent: 'app',
-  cellSize: 72,
+  cellSize: 64,
   gridCols: 8,
   gridRows: 8,
-  gridWidth: 576,
-  gridHeight: 576,
-  gridLeft: 40,
-  gridTop: 132
+  gridWidth: 512,
+  gridHeight: 512,
+  gridLeft: 267,
+  gridTop: 128
 };
 
 export const COLORS = {
   background: '#0d0d0f',
   cellA: '#111118',
   cellB: '#18181f',
-  gridBorder: 'rgba(0, 245, 255, 0.15)',
+  gridBorder: 'rgba(0, 245, 255, 0.12)',
   hover: '#00f5ff',
   move: '#39ff14',
   attack: '#ff3366',

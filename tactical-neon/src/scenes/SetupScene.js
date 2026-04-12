@@ -1,7 +1,7 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 import { COLORS, GAME_CONFIG, PLAYER_INFO, SETUP_ROWS, UNIT_ORDER } from '../config.js';
 import { createGameState } from '../gameState.js';
-import { TurnSystem } from '../systems/TurnSystem.js';
+import { createUnitGlyph } from '../ui/unitGlyph.js';
 
 export class SetupScene extends Phaser.Scene {
   constructor() {
@@ -10,7 +10,6 @@ export class SetupScene extends Phaser.Scene {
 
   init() {
     this.gameState = createGameState();
-    this.turnSystem = new TurnSystem(this.gameState);
     this.unitToPlaceIndexByPlayer = {
       1: 0,
       2: 0
@@ -126,14 +125,11 @@ export class SetupScene extends Phaser.Scene {
       const color = PLAYER_INFO[unit.owner].color;
       const circle = this.add.circle(px, py, 22, Phaser.Display.Color.HexStringToColor(color).color, 1)
         .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor('#ffffff').color, 0.25);
-      const label = this.add.text(px, py - 11, unit.symbol, {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: COLORS.text,
-        letterSpacing: 2
-      }).setOrigin(0.5);
       this.unitGroup.add(circle);
-      this.unitGroup.add(label);
+      const glyphParts = createUnitGlyph(this, unit, px, py);
+      for (const part of glyphParts) {
+        this.unitGroup.add(part);
+      }
     }
   }
 }

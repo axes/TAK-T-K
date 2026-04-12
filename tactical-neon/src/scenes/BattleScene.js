@@ -36,24 +36,22 @@ export class BattleScene extends Phaser.Scene {
       onMove: () => this.setAction('move'),
       onBasic: () => this.setAction('basic'),
       onSpecial: () => this.setAction('special'),
-      onEndTurn: () => this.endTurn()
+      onEndTurn: () => this.tryEndTurnFromButton()
     });
 
-    this.titleText = this.add.text(24, 120, 'BATTLE MODE: HOT-SEAT', {
+    this.titleText = this.add.text(24, 84, 'BATTLE MODE: HOT-SEAT', {
       fontFamily: 'monospace',
-      fontSize: '18px',
-      color: COLORS.text,
-      letterSpacing: 3
-    }).setDepth(21);
-
-    this.statusText = this.add.text(24, 96, '', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: COLORS.text,
+      fontSize: '13px',
+      color: 'rgba(255,255,255,0.5)',
       letterSpacing: 2
     }).setDepth(21);
 
-    this.titleText.setPosition(24, 72);
+    this.statusText = this.add.text(24, 106, '', {
+      fontFamily: 'monospace',
+      fontSize: '1px',
+      color: 'rgba(0,0,0,0)',
+      letterSpacing: 0
+    }).setDepth(0).setVisible(false);
 
     this.drawBoard();
     this.input.keyboard.on('keydown-ESC', () => {
@@ -122,7 +120,7 @@ export class BattleScene extends Phaser.Scene {
           GAME_CONFIG.cellSize,
           Phaser.Display.Color.HexStringToColor(baseColor).color,
           1
-        ).setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+        ).setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
 
         cell.setInteractive({ useHandCursor: true });
         cell.on('pointerover', () => {
@@ -132,7 +130,7 @@ export class BattleScene extends Phaser.Scene {
         });
         cell.on('pointerout', () => {
           this.hoveredCell = null;
-          cell.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+          cell.setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
           this.renderOverlays();
         });
         cell.on('pointerdown', () => this.handleCellClick(x, y));
@@ -171,6 +169,20 @@ export class BattleScene extends Phaser.Scene {
     this.hud.update(this.gameState, selectedUnit, this.getActionAvailability(selectedUnit));
   }
 
+  selectUnitWithDefaultAction(unit) {
+    if (!unit) {
+      return;
+    }
+
+    this.turnSystem.selectUnit(unit.id);
+    const availability = this.getActionAvailability(unit);
+    this.gameState.selectedAction = availability.move ? 'move' : 'preview';
+    this.renderOverlays();
+    this.renderUnits();
+    this.hud.update(this.gameState, unit, availability);
+    this.updateStatusText();
+  }
+
   handleCellClick(x, y) {
     if (this.gameState.winner) {
       return;
@@ -181,7 +193,10 @@ export class BattleScene extends Phaser.Scene {
 
     // Si estamos en una acción activa, resolver esa acción
     if (this.gameState.selectedAction === 'move' && selectedUnit) {
-      this.tryMoveSelectedUnit(x, y);
+      const moved = this.tryMoveSelectedUnit(x, y);
+      if (!moved) {
+        this.clearSelection();
+      }
       return;
     }
 
@@ -193,9 +208,7 @@ export class BattleScene extends Phaser.Scene {
     // Si no hay una acción activa, permitir selección de unidades
     if (!selectedUnit) {
       if (clickedUnit) {
-        this.turnSystem.selectUnit(clickedUnit.id);
-        this.gameState.selectedAction = 'preview';
-        this.refreshSelection();
+        this.selectUnitWithDefaultAction(clickedUnit);
       }
       return;
     }
@@ -207,9 +220,11 @@ export class BattleScene extends Phaser.Scene {
 
     // En modo preview se puede cambiar entre unidades para estrategia e inspeccion.
     if (selectedUnit && clickedUnit && clickedUnit.id !== selectedUnit.id) {
-      this.turnSystem.selectUnit(clickedUnit.id);
-      this.gameState.selectedAction = 'preview';
-      this.refreshSelection();
+      if (this.gameState.selectedAction === 'move') {
+        return;
+      }
+
+      this.selectUnitWithDefaultAction(clickedUnit);
       return;
     }
   }
@@ -217,26 +232,25 @@ export class BattleScene extends Phaser.Scene {
   tryMoveSelectedUnit(x, y) {
     const unit = this.getSelectedUnit();
     if (!unit || unit.specialLockedMove) {
-      return;
+      return false;
     }
 
     const reachable = MovementSystem.getReachableCells(unit, this.gameState.units, GAME_CONFIG);
     const match = reachable.find((cell) => cell.x === x && cell.y === y);
     if (!match) {
-      this.addLog(`CELDA FUERA DE ALCANCE`);
-      return;
+      return false;
     }
 
     const moved = MovementSystem.moveUnit(unit, { x, y }, this.gameState.units, GAME_CONFIG, match.cost);
     if (!moved) {
-      this.addLog(`MOVIMIENTO FALLO (PA insuficientes?)`);
-      return;
+      return false;
     }
 
     this.gameState.selectedAction = 'preview';
     this.addLog(`${unit.name} SE MUEVE A ${x + 1},${y + 1} POR ${match.cost} PA`);
     this.refreshSelection();
     this.checkEndOfTurnConditions();
+    return true;
   }
 
   tryAttackSelectedUnit(x, y, actionType) {
@@ -299,20 +313,21 @@ export class BattleScene extends Phaser.Scene {
 
       const { x, y } = centerOfCell(unit.position.x, unit.position.y);
       const color = PLAYER_INFO[unit.owner].color;
-      const circle = this.add.circle(x, y, 24, Phaser.Display.Color.HexStringToColor(color).color, 1)
-        .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor('#ffffff').color, 0.35);
-      const label = this.add.text(x, y - 12, unit.symbol, {
-        fontFamily: 'monospace',
-        fontSize: '22px',
-        color: COLORS.text,
-        letterSpacing: 2
-      }).setOrigin(0.5);
+      const fillAlpha = 0.15;
+      const circle = this.add.circle(x, y, 18, Phaser.Display.Color.HexStringToColor(color).color, fillAlpha)
+        .setStrokeStyle(1.5, Phaser.Display.Color.HexStringToColor(color).color, 1);
 
       if (unit.hp <= 3) {
         circle.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.attack).color, 1);
       }
 
       this.unitGroup.add(circle);
+      const label = this.add.text(x, y, unit.symbol, {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color
+      }).setOrigin(0.5);
       this.unitGroup.add(label);
     }
   }
@@ -355,7 +370,7 @@ export class BattleScene extends Phaser.Scene {
     if (showBasics) {
       for (const target of basicTargets) {
         if (target.position) {
-          this.addOverlay(target.position.x, target.position.y, COLORS.attack, 0.3, false);
+          this.addOverlay(target.position.x, target.position.y, COLORS.attack, 0.18, false);
         }
       }
     }
@@ -363,7 +378,7 @@ export class BattleScene extends Phaser.Scene {
     if (showSpecials) {
       for (const target of specialTargets) {
         if (target.position) {
-          this.addOverlay(target.position.x, target.position.y, '#aa66ff', 0.25, false);
+          this.addOverlay(target.position.x, target.position.y, COLORS.attack, 0.18, false);
         }
       }
     }
@@ -377,7 +392,7 @@ export class BattleScene extends Phaser.Scene {
     const px = GAME_CONFIG.gridLeft + x * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2;
     const py = GAME_CONFIG.gridTop + y * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2;
     const rect = this.add.rectangle(px, py, GAME_CONFIG.cellSize, GAME_CONFIG.cellSize, Phaser.Display.Color.HexStringToColor(color).color, alpha)
-      .setStrokeStyle(outlineOnly ? 3 : 2, Phaser.Display.Color.HexStringToColor(color).color, 1);
+      .setStrokeStyle(outlineOnly ? 2 : 1.5, Phaser.Display.Color.HexStringToColor(color).color, 1);
     if (!outlineOnly) {
       rect.setBlendMode(Phaser.BlendModes.ADD);
     }
@@ -387,8 +402,7 @@ export class BattleScene extends Phaser.Scene {
   updateStatusText() {
     const selectedUnit = this.getSelectedUnit();
     if (!selectedUnit) {
-      this.statusText.setText(`${PLAYER_INFO[this.gameState.currentPlayer].name} DEBE SELECCIONAR UNA UNIDAD`);
-      this.statusText.setColor(PLAYER_INFO[this.gameState.currentPlayer].color);
+      this.statusText.setText('');
       return;
     }
 
@@ -405,12 +419,16 @@ export class BattleScene extends Phaser.Scene {
   checkEndOfTurnConditions() {
     if (this.gameState.winner) {
       this.scene.pause();
-      this.add.text(278, 360, `VICTORIA DE ${PLAYER_INFO[this.gameState.winner].name}`, {
+      const victoryOverlay = this.add.rectangle(683, 384, 1366, 768, 0x000000, 0.7)
+        .setDepth(200);
+      const victoryText = this.add.text(683, 384, `VICTORIA DE ${PLAYER_INFO[this.gameState.winner].name}`, {
         fontFamily: 'monospace',
-        fontSize: '28px',
+        fontSize: '40px',
         color: PLAYER_INFO[this.gameState.winner].color,
         letterSpacing: 5
-      });
+      }).setOrigin(0.5).setDepth(201);
+      this.overlayGroup.add(victoryOverlay);
+      this.overlayGroup.add(victoryText);
       return;
     }
 
@@ -429,8 +447,22 @@ export class BattleScene extends Phaser.Scene {
   }
 
   endTurn() {
+    this.hud.hideEndTurnConfirmation();
     this.turnSystem.endTurn();
     this.addLog(`TURNO DE ${PLAYER_INFO[this.gameState.currentPlayer].name}`);
     this.refreshSelection();
+  }
+
+  tryEndTurnFromButton() {
+    const hasActions = this.turnSystem.activePlayerHasActions();
+    if (hasActions) {
+      this.hud.showEndTurnConfirmation(
+        () => this.endTurn(),
+        () => {}
+      );
+      return;
+    }
+
+    this.endTurn();
   }
 }

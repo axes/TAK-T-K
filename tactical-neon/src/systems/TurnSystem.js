@@ -3,14 +3,6 @@ export class TurnSystem {
     this.gameState = gameState;
   }
 
-  startBattle(startingPlayer) {
-    // TODO[FASE-2]: esta fuente de verdad se reutilizará para IA y multijugador.
-    this.gameState.phase = 'battle';
-    this.gameState.currentPlayer = startingPlayer;
-    this.gameState.turnNumber = 1;
-    this.startTurn(startingPlayer);
-  }
-
   startTurn(playerId) {
     this.gameState.currentPlayer = playerId;
     this.gameState.turnNumber += 1;

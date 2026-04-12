@@ -90,8 +90,54 @@ La base actual incluye:
 - turnos hot-seat
 - movimiento por PA
 - combate con habilidades
-- HUD de stats y acciones
-- layout listo para seguir ampliando
+- HUD rediseñado por zonas (header, tablero, panel, footer)
+- flujo de acciones más claro para selección/movimiento por defecto
+- botón de fin de turno con confirmación contextual integrada
+
+## Cambios recientes (abril 2026)
+
+### Layout y resolución
+
+- canvas actualizado a **1366 × 768**
+- tablero 8x8 ajustado a celdas de **64 × 64**
+- tablero centrado en zona de juego con esquina superior izquierda en **x:267, y:128**
+- división visual consistente en 4 zonas: header, tablero, panel lateral y footer
+
+### HUD y UI
+
+- header simplificado: turno, jugador activo y conteo de unidades vivas
+- panel lateral reorganizado con jerarquía clara:
+	- datos de unidad (HP/PA)
+	- acciones
+	- descripción
+	- estado de “sin acciones”
+- botón **FINALIZAR TURNO** fijo al pie del panel lateral
+- color del botón de fin de turno sincronizado con el jugador activo
+- modal de confirmación visual (estética neon) al finalizar turno con PA disponibles (sin alert nativa del navegador)
+
+### Flujo de interacción
+
+- al seleccionar unidad propia con acciones disponibles, el movimiento queda como acción por defecto
+- clic en celda fuera de rango durante movimiento cancela la selección (equivalente a ESC)
+- mejora de claridad para distinguir acciones de unidad vs cambio de turno
+
+### Marcadores de unidad
+
+- en batalla: unidad renderizada con círculo por propietario y letra centrada
+- fallback de glifos simples disponible para setup en [tactical-neon/src/ui/unitGlyph.js](tactical-neon/src/ui/unitGlyph.js):
+	- Vanguard: cuadrado
+	- Sniper: círculo
+	- Mystic: rombo
+
+### Preparación para sprites
+
+- carpeta preparada para sprites de unidades en [tactical-neon/public/assets/sprites/units](tactical-neon/public/assets/sprites/units)
+- archivo de control de carpeta: [tactical-neon/public/assets/sprites/units/.gitkeep](tactical-neon/public/assets/sprites/units/.gitkeep)
+
+### Limpieza y estructura del proyecto
+
+- reglas de ignorado ampliadas en [tactical-neon/.gitignore](tactical-neon/.gitignore)
+- lockfile generado para reproducibilidad: [tactical-neon/package-lock.json](tactical-neon/package-lock.json)
 
 ## Licencia
 
