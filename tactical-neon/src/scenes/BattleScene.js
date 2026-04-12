@@ -4,6 +4,7 @@ import { HUD } from '../ui/HUD.js';
 import { TurnSystem } from '../systems/TurnSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { CombatSystem } from '../systems/CombatSystem.js';
+import { AISystem } from '../systems/AISystem.js';
 
 function centerOfCell(x, y) {
   return {
@@ -20,9 +21,15 @@ export class BattleScene extends Phaser.Scene {
   init(data) {
     this.gameState = data.gameState;
     this.turnSystem = new TurnSystem(this.gameState);
+    this.aiSystem = new AISystem(this.gameState, MovementSystem, CombatSystem, this);
+    this.aiSystem.onAction = (action) => this.handleAIAction(action);
     this.pendingStartingPlayer = data.startingPlayer || 1;
     this.gameState.turnNumber = 0;
+    this.gameState.inputLocked = false;
     this.gameState.log = ['BATALLA INICIADA'];
+    this.aiTurnInProgress = false;
+    this.aiThinkingTween = null;
+    this.victoryShown = false;
   }
 
   create() {
@@ -55,10 +62,15 @@ export class BattleScene extends Phaser.Scene {
 
     this.drawBoard();
     this.input.keyboard.on('keydown-ESC', () => {
+      if (this.gameState.inputLocked) {
+        return;
+      }
       this.clearSelection();
     });
     this.turnSystem.startTurn(this.pendingStartingPlayer);
     this.updateBoard();
+    this.updateBattleTitle();
+    this.maybeRunAITurn();
   }
 
   getActionAvailability(unit) {
@@ -149,6 +161,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   setAction(action) {
+    if (this.gameState.inputLocked) {
+      return;
+    }
+
     const selectedUnit = this.getSelectedUnit();
     if (!selectedUnit) {
       return;
@@ -184,6 +200,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   handleCellClick(x, y) {
+    if (this.gameState.inputLocked) {
+      return;
+    }
+
     if (this.gameState.winner) {
       return;
     }
@@ -289,6 +309,29 @@ export class BattleScene extends Phaser.Scene {
     this.turnSystem.checkVictory();
     this.refreshSelection();
     this.checkEndOfTurnConditions();
+  }
+
+  handleAIAction(action) {
+    if (action.type === 'move') {
+      this.addLog(`${action.unit.name} SE MUEVE A ${action.to.x + 1},${action.to.y + 1}`);
+    }
+
+    if (action.type === 'attack') {
+      let logEntry = `${action.unit.name} ATACA A ${action.target.name} POR ${action.result.damage} DMG`;
+      if (action.attackType === 'special' && action.unit.key === 'MYSTIC') {
+        logEntry += ' Y REDUCE SU PA FUTURO';
+      }
+      this.addLog(logEntry);
+      if (action.result.defeated) {
+        this.addLog(`${action.target.name} HA SIDO DESTRUIDA/O`);
+      }
+    }
+
+    this.turnSystem.checkVictory();
+    this.refreshSelection();
+    if (this.gameState.inputLocked) {
+      this.showAIThinkingIndicator();
+    }
   }
 
   refreshSelection() {
@@ -418,17 +461,7 @@ export class BattleScene extends Phaser.Scene {
 
   checkEndOfTurnConditions() {
     if (this.gameState.winner) {
-      this.scene.pause();
-      const victoryOverlay = this.add.rectangle(683, 384, 1366, 768, 0x000000, 0.7)
-        .setDepth(200);
-      const victoryText = this.add.text(683, 384, `VICTORIA DE ${PLAYER_INFO[this.gameState.winner].name}`, {
-        fontFamily: 'monospace',
-        fontSize: '40px',
-        color: PLAYER_INFO[this.gameState.winner].color,
-        letterSpacing: 5
-      }).setOrigin(0.5).setDepth(201);
-      this.overlayGroup.add(victoryOverlay);
-      this.overlayGroup.add(victoryText);
+      this.showVictoryScreen();
       return;
     }
 
@@ -447,13 +480,23 @@ export class BattleScene extends Phaser.Scene {
   }
 
   endTurn() {
+    if (this.gameState.winner) {
+      return;
+    }
+
     this.hud.hideEndTurnConfirmation();
     this.turnSystem.endTurn();
     this.addLog(`TURNO DE ${PLAYER_INFO[this.gameState.currentPlayer].name}`);
     this.refreshSelection();
+    this.updateBattleTitle();
+    this.maybeRunAITurn();
   }
 
   tryEndTurnFromButton() {
+    if (this.gameState.inputLocked) {
+      return;
+    }
+
     const hasActions = this.turnSystem.activePlayerHasActions();
     if (hasActions) {
       this.hud.showEndTurnConfirmation(
@@ -464,5 +507,147 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.endTurn();
+  }
+
+  updateBattleTitle() {
+    const modeText = this.gameState.mode === 'pve' ? 'BATTLE MODE: VS IA' : 'BATTLE MODE: HOT-SEAT';
+    this.titleText.setText(modeText);
+  }
+
+  maybeRunAITurn() {
+    if (this.gameState.mode !== 'pve' || this.gameState.currentPlayer !== 2 || this.gameState.winner || this.aiTurnInProgress) {
+      return;
+    }
+
+    this.runAITurn();
+  }
+
+  async runAITurn() {
+    this.aiTurnInProgress = true;
+    this.gameState.inputLocked = true;
+    this.turnSystem.clearSelection();
+    this.refreshSelection();
+    this.showAIThinkingIndicator();
+
+    await this.aiSystem.executeTurn();
+    this.turnSystem.checkVictory();
+
+    this.hideAIThinkingIndicator();
+    this.gameState.inputLocked = false;
+    this.aiTurnInProgress = false;
+
+    if (this.gameState.winner) {
+      this.showVictoryScreen();
+      return;
+    }
+
+    this.hud.hideEndTurnConfirmation();
+    this.turnSystem.endTurn();
+    this.addLog(`TURNO DE ${PLAYER_INFO[this.gameState.currentPlayer].name}`);
+    this.refreshSelection();
+    this.updateBattleTitle();
+  }
+
+  showAIThinkingIndicator() {
+    this.hud.playerText.setText('IA PENSANDO...');
+    this.hud.playerText.setColor('rgba(255, 0, 229, 0.7)');
+
+    if (this.aiThinkingTween) {
+      return;
+    }
+
+    this.aiThinkingTween = this.tweens.add({
+      targets: this.hud.playerText,
+      alpha: 0.4,
+      duration: 500,
+      yoyo: true,
+      repeat: -1
+    });
+  }
+
+  hideAIThinkingIndicator() {
+    if (this.aiThinkingTween) {
+      this.aiThinkingTween.stop();
+      this.aiThinkingTween = null;
+    }
+    this.hud.playerText.setAlpha(1);
+  }
+
+  showVictoryScreen() {
+    if (this.victoryShown) {
+      return;
+    }
+
+    this.victoryShown = true;
+    this.gameState.inputLocked = true;
+    this.hud.hideEndTurnConfirmation();
+
+    const winnerIsIA = this.gameState.mode === 'pve' && this.gameState.winner === 2;
+    const winnerText = winnerIsIA ? 'IA VICTORIOSA' : `JUGADOR ${this.gameState.winner} VICTORIOSO`;
+    const winnerColor = this.gameState.winner === 1 ? '#00f5ff' : '#ff00e5';
+    const aliveCount = this.gameState.units.filter((unit) => unit.isAlive()).length;
+    const eliminated = this.gameState.units.length - aliveCount;
+
+    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.75).setDepth(200);
+    const title = this.add.text(683, 384, winnerText, {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      fontStyle: 'bold',
+      color: winnerColor,
+      letterSpacing: 4
+    }).setOrigin(0.5).setDepth(201).setAlpha(0);
+
+    const subtitle = this.add.text(683, 434, `TURNO ${this.gameState.turnNumber} · UNIDADES ELIMINADAS: ${eliminated}`, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: 'rgba(255,255,255,0.4)'
+    }).setOrigin(0.5).setDepth(201).setAlpha(0.95);
+
+    this.tweens.add({
+      targets: title,
+      alpha: 1,
+      duration: 600
+    });
+
+    this.createResultButton(571, 504, 200, 48, 'JUGAR DE NUEVO', '#00f5ff', () => {
+      this.scene.start('SetupScene', { mode: this.gameState.mode });
+    });
+
+    this.createResultButton(795, 504, 200, 48, 'MENÚ PRINCIPAL', '#ff00e5', () => {
+      this.scene.start('MainScene');
+    });
+
+    this.overlayGroup.add(overlay);
+    this.overlayGroup.add(title);
+    this.overlayGroup.add(subtitle);
+  }
+
+  createResultButton(x, y, width, height, label, color, onClick) {
+    const border = Phaser.Display.Color.HexStringToColor(color).color;
+    const button = this.add.rectangle(x, y, width, height, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setDepth(202)
+      .setStrokeStyle(1, border, 0.8)
+      .setInteractive({ useHandCursor: true });
+
+    const text = this.add.text(x, y, label, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      fontStyle: 'bold',
+      color,
+      letterSpacing: 2
+    }).setOrigin(0.5).setDepth(203);
+
+    button.on('pointerover', () => {
+      button.setFillStyle(border, 0.08);
+      button.setStrokeStyle(1, border, 1);
+    });
+    button.on('pointerout', () => {
+      button.setFillStyle(border, 0);
+      button.setStrokeStyle(1, border, 0.8);
+    });
+    button.on('pointerdown', () => onClick());
+
+    this.overlayGroup.add(button);
+    this.overlayGroup.add(text);
   }
 }

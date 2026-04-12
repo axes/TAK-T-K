@@ -1,7 +1,8 @@
 import { UNIT_ORDER, UNIT_TEMPLATES } from './config.js';
 import { Unit } from './entities/Unit.js';
 
-export function createGameState() {
+export function createGameState(options = {}) {
+  const { mode = 'pvp' } = options;
   const startingUnits = [];
 
   for (const owner of [1, 2]) {
@@ -12,6 +13,8 @@ export function createGameState() {
 
   return {
     phase: 'setup',
+    mode,
+    inputLocked: false,
     setupPlayer: 1,
     currentPlayer: 1,
     turnNumber: 1,

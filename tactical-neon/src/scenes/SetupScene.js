@@ -8,12 +8,14 @@ export class SetupScene extends Phaser.Scene {
     super('SetupScene');
   }
 
-  init() {
-    this.gameState = createGameState();
+  init(data) {
+    const mode = data?.mode || 'pvp';
+    this.gameState = createGameState({ mode });
     this.unitToPlaceIndexByPlayer = {
       1: 0,
       2: 0
     };
+    this.isAutoPlacing = false;
   }
 
   create() {
@@ -69,6 +71,10 @@ export class SetupScene extends Phaser.Scene {
   }
 
   handleCellClick(x, y) {
+    if (this.isAutoPlacing) {
+      return;
+    }
+
     const owner = this.gameState.setupPlayer;
     const rows = SETUP_ROWS[owner];
 
@@ -93,17 +99,68 @@ export class SetupScene extends Phaser.Scene {
 
     if (this.unitToPlaceIndexByPlayer[owner] >= UNIT_ORDER.length) {
       if (owner === 1) {
+        if (this.gameState.mode === 'pve') {
+          this.gameState.setupPlayer = 2;
+          this.gameState.log.unshift('IA: INICIANDO DESPLIEGUE');
+          this.refreshSetupStatus();
+          this.startAutoPlacementForAI();
+          return;
+        }
+
         this.gameState.setupPlayer = 2;
         this.gameState.log.unshift('JUGADOR 2, COLOCA TUS UNIDADES');
       } else {
-        const startingPlayer = Phaser.Math.Between(0, 1) === 0 ? 1 : 2;
-        this.gameState.phase = 'battle';
-        this.scene.start('BattleScene', { gameState: this.gameState, startingPlayer });
+        this.startBattle();
         return;
       }
     }
 
     this.refreshSetupStatus();
+  }
+
+  async startAutoPlacementForAI() {
+    this.isAutoPlacing = true;
+    this.hintText.setText('IA DESPLEGANDO UNIDADES...');
+
+    const availableCells = [];
+    for (const y of SETUP_ROWS[2]) {
+      for (let x = 0; x < GAME_CONFIG.gridCols; x += 1) {
+        availableCells.push({ x, y });
+      }
+    }
+
+    for (let i = 0; i < UNIT_ORDER.length; i += 1) {
+      const templateKey = UNIT_ORDER[this.unitToPlaceIndexByPlayer[2]];
+      const unit = this.gameState.units.find((candidate) =>
+        candidate.owner === 2 && candidate.key === templateKey && !candidate.position
+      );
+      if (!unit || availableCells.length === 0) {
+        continue;
+      }
+
+      const randomIndex = Phaser.Math.Between(0, availableCells.length - 1);
+      const [cell] = availableCells.splice(randomIndex, 1);
+      unit.position = { x: cell.x, y: cell.y };
+      this.gameState.setupPlacedByPlayer[2].push(unit.id);
+      this.unitToPlaceIndexByPlayer[2] += 1;
+      this.gameState.log.unshift(`IA COLOCA ${unit.name} EN ${cell.x + 1},${cell.y + 1}`);
+      this.refreshSetupStatus();
+      await this.wait(400);
+    }
+
+    this.startBattle();
+  }
+
+  startBattle() {
+    const startingPlayer = Phaser.Math.Between(0, 1) === 0 ? 1 : 2;
+    this.gameState.phase = 'battle';
+    this.scene.start('BattleScene', { gameState: this.gameState, startingPlayer });
+  }
+
+  wait(ms) {
+    return new Promise((resolve) => {
+      this.time.delayedCall(ms, resolve);
+    });
   }
 
   refreshSetupStatus() {
