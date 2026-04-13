@@ -11,12 +11,26 @@ export class SetupScene extends Phaser.Scene {
   init(data) {
     const mode = data?.mode || 'pvp';
     this.gameState = createGameState({ mode });
+    this.playerId = data?.playerId || null;
+    this.roomId = data?.roomId || null;
+    this.opponentNickname = data?.opponentNickname || null;
+    this.socketManager = data?.socketManager || null;
+    this.isRemote = mode === 'remote';
+    this.remoteOwner = this.playerId === 'p2' ? 2 : 1;
+    if (this.isRemote) {
+      this.gameState.setupPlayer = this.remoteOwner;
+    }
+
     this.unitToPlaceIndexByPlayer = {
       1: 0,
       2: 0
     };
     this.isAutoPlacing = false;
     this.isExitConfirmOpen = false;
+    this.remoteSetupSubmitted = false;
+    this.remoteConfirmBg = null;
+    this.remoteConfirmText = null;
+    this.remoteSocketHandlers = null;
   }
 
   create() {
@@ -46,7 +60,15 @@ export class SetupScene extends Phaser.Scene {
 
     this.drawBoard();
     this.createExitControls();
+    if (this.isRemote) {
+      this.createRemoteControls();
+      this.bindRemoteSetupEvents();
+      this.hintText.setText('COLOCA TUS UNIDADES Y CONFIRMA DESPLIEGUE');
+    }
     this.refreshSetupStatus();
+
+    this.events.once('shutdown', () => this.cleanupRemoteSetup());
+    this.events.once('destroy', () => this.cleanupRemoteSetup());
   }
 
   createExitControls() {
@@ -121,6 +143,9 @@ export class SetupScene extends Phaser.Scene {
 
     confirmYesBg.on('pointerdown', () => {
       this.hideExitConfirmation();
+      if (this.isRemote && this.socketManager) {
+        this.socketManager.disconnect();
+      }
       this.scene.start('MainScene');
     });
     confirmNoBg.on('pointerdown', () => this.hideExitConfirmation());
@@ -198,6 +223,12 @@ export class SetupScene extends Phaser.Scene {
     this.gameState.log.unshift(`${PLAYER_INFO[owner].name} COLOCA ${unit.name} EN ${x + 1},${y + 1}`);
 
     if (this.unitToPlaceIndexByPlayer[owner] >= UNIT_ORDER.length) {
+      if (this.isRemote) {
+        this.updateRemoteConfirmState();
+        this.refreshSetupStatus();
+        return;
+      }
+
       if (owner === 1) {
         if (this.gameState.mode === 'pve') {
           this.gameState.setupPlayer = 2;
@@ -252,6 +283,10 @@ export class SetupScene extends Phaser.Scene {
   }
 
   startBattle() {
+    if (this.isRemote) {
+      return;
+    }
+
     const startingPlayer = Phaser.Math.Between(0, 1) === 0 ? 1 : 2;
     this.gameState.phase = 'battle';
     this.scene.start('BattleScene', { gameState: this.gameState, startingPlayer });
@@ -266,7 +301,12 @@ export class SetupScene extends Phaser.Scene {
   refreshSetupStatus() {
     const owner = this.gameState.setupPlayer;
     const templateKey = UNIT_ORDER[this.unitToPlaceIndexByPlayer[owner]] || 'LISTO';
-    this.statusText.setText(`TURNO DE CONFIGURACION: ${PLAYER_INFO[owner].name} | UNIDAD ACTIVA: ${templateKey}`);
+    if (this.isRemote) {
+      const localName = this.playerId === 'p2' ? 'JUGADOR 2' : 'JUGADOR 1';
+      this.statusText.setText(`DESPLIEGUE REMOTO: ${localName} | UNIDAD ACTIVA: ${templateKey}`);
+    } else {
+      this.statusText.setText(`TURNO DE CONFIGURACION: ${PLAYER_INFO[owner].name} | UNIDAD ACTIVA: ${templateKey}`);
+    }
     this.refreshUnitMarkers();
   }
 
@@ -288,5 +328,129 @@ export class SetupScene extends Phaser.Scene {
         this.unitGroup.add(part);
       }
     }
+  }
+
+  createRemoteControls() {
+    this.remoteConfirmBg = this.add.rectangle(1120, 708, 180, 40, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0.45)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+    this.remoteConfirmText = this.add.text(1120, 708, 'CONFIRMAR', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: 'rgba(0,245,255,0.45)',
+      letterSpacing: 1
+    }).setOrigin(0.5).setDepth(41);
+
+    this.remoteConfirmBg.on('pointerover', () => {
+      if (!this.canSubmitRemoteSetup()) {
+        return;
+      }
+      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0.12);
+    });
+    this.remoteConfirmBg.on('pointerout', () => {
+      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0);
+    });
+    this.remoteConfirmBg.on('pointerdown', () => this.submitRemoteSetup());
+    this.updateRemoteConfirmState();
+  }
+
+  canSubmitRemoteSetup() {
+    return this.isRemote && !this.remoteSetupSubmitted && this.unitToPlaceIndexByPlayer[this.remoteOwner] >= UNIT_ORDER.length;
+  }
+
+  updateRemoteConfirmState() {
+    if (!this.remoteConfirmBg || !this.remoteConfirmText) {
+      return;
+    }
+
+    const enabled = this.canSubmitRemoteSetup();
+    this.remoteConfirmBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#00f5ff').color, enabled ? 0.9 : 0.35);
+    this.remoteConfirmText.setColor(enabled ? '#00f5ff' : 'rgba(0,245,255,0.35)');
+  }
+
+  buildRemotePlacements() {
+    const placements = {};
+    const localUnits = this.gameState.units.filter((unit) => unit.owner === this.remoteOwner);
+    for (const key of UNIT_ORDER) {
+      const unit = localUnits.find((item) => item.key === key);
+      if (!unit?.position) {
+        return null;
+      }
+      placements[key] = { x: unit.position.x, y: unit.position.y };
+    }
+
+    return placements;
+  }
+
+  submitRemoteSetup() {
+    if (!this.canSubmitRemoteSetup()) {
+      return;
+    }
+
+    const placements = this.buildRemotePlacements();
+    if (!placements) {
+      return;
+    }
+
+    this.remoteSetupSubmitted = true;
+    this.isAutoPlacing = true;
+    this.updateRemoteConfirmState();
+    this.hintText.setText('ESPERANDO AL OPONENTE...');
+    this.remoteConfirmText.setText('ENVIADO');
+    this.socketManager.emit('game:setup', {
+      playerId: this.playerId,
+      placements
+    });
+  }
+
+  bindRemoteSetupEvents() {
+    if (!this.socketManager) {
+      return;
+    }
+
+    this.remoteSocketHandlers = {
+      gameStart: (payload = {}) => {
+        if (!payload.gameState) {
+          return;
+        }
+
+        this.scene.start('BattleScene', {
+          gameState: payload.gameState,
+          playerId: this.playerId,
+          roomId: this.roomId,
+          opponentNickname: this.opponentNickname,
+          socketManager: this.socketManager
+        });
+      },
+      gameInvalid: (payload = {}) => {
+        if (!payload.reason) {
+          return;
+        }
+
+        this.remoteSetupSubmitted = false;
+        this.isAutoPlacing = false;
+        this.updateRemoteConfirmState();
+        this.hintText.setText(payload.reason);
+      },
+      opponentDisconnected: () => {
+        this.hintText.setText('OPONENTE DESCONECTADO');
+      }
+    };
+
+    this.socketManager.on('game:start', this.remoteSocketHandlers.gameStart);
+    this.socketManager.on('game:invalid', this.remoteSocketHandlers.gameInvalid);
+    this.socketManager.on('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
+  }
+
+  cleanupRemoteSetup() {
+    if (!this.socketManager || !this.remoteSocketHandlers) {
+      return;
+    }
+
+    this.socketManager.off('game:start', this.remoteSocketHandlers.gameStart);
+    this.socketManager.off('game:invalid', this.remoteSocketHandlers.gameInvalid);
+    this.socketManager.off('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
+    this.remoteSocketHandlers = null;
   }
 }

@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-04-13 — push a `feature/fase3-client-lobby-socket`
+
+- feat(server): add multiplayer room backend
+- feat(remote): add lobby and socket flow
+
+## [v0.3.1] — 2026-04-13 — Fase 3 (rematch remoto)
+
+### Agregado
+- Flujo de rematch en `remote` con confirmación de ambos jugadores y timeout de 5s (`game:rematch_prompt` / `game:rematch_started`).
+- UI de confirmación de rematch en `BattleScene` con contador visual y acciones `CONFIRMAR` / `CANCELAR`.
+- Evento de cierre limpio de sala (`room:closed`) para finalizar la sesión remota en ambos clientes cuando falla el rematch.
+
+### Modificado
+- `RoomManager` ahora soporta reinicio de sala para rematch y cierre explícito de sala remota.
+- `server/src/server.js` alterna el jugador inicial entre partidas consecutivas de una misma sala remota.
+- Botón `JUGAR DE NUEVO` en remoto ahora inicia el handshake de rematch en vez de volver al lobby.
+
+## [v0.3.0] — 2026-04-13 — Fase 3
+
+### Agregado
+- Servidor Node.js + Socket.IO en `server/`.
+- `LobbyScene`: creación y unión a salas por ID.
+- `SocketManager`: wrapper cliente de Socket.IO.
+- Modo `remote` en `SetupScene` y `BattleScene`.
+- Validación de acciones en servidor (`GameValidator`).
+- Instrucciones de deploy en `server/DEPLOY.md`.
+
+### Modificado
+- `MainScene`: card `REMOTO` habilitada.
+- `config.js`: `SERVER_URL` desde variable de entorno.
+
 ## [v0.2.1] — 2026-04-13 — Ajustes cliente
 
 ### Agregado

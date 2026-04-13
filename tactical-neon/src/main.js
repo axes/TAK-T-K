@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { SetupScene } from './scenes/SetupScene.js';
 import { BattleScene } from './scenes/BattleScene.js';
+import { LobbyScene } from './scenes/LobbyScene.js';
 import { HowToPlayScene } from './scenes/HowToPlayScene.js';
 import { StoryScene } from './scenes/StoryScene.js';
 import { CreditsScene } from './scenes/CreditsScene.js';
@@ -25,7 +26,7 @@ const config = {
   height: GAME_CONFIG.height,
   parent: GAME_CONFIG.parent,
   backgroundColor: GAME_CONFIG.backgroundColor,
-  scene: [BootScene, MainScene, SetupScene, BattleScene, HowToPlayScene, StoryScene, CreditsScene, SettingsScene],
+  scene: [BootScene, MainScene, LobbyScene, SetupScene, BattleScene, HowToPlayScene, StoryScene, CreditsScene, SettingsScene],
   pixelArt: false,
   antialias: true,
   resolution: 1,

@@ -5,6 +5,8 @@ import { TurnSystem } from '../systems/TurnSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { CombatSystem } from '../systems/CombatSystem.js';
 import { AISystem } from '../systems/AISystem.js';
+import { UNIT_TEMPLATES } from '../config.js';
+import { Unit } from '../entities/Unit.js';
 
 function centerOfCell(x, y) {
   return {
@@ -20,16 +22,37 @@ export class BattleScene extends Phaser.Scene {
 
   init(data) {
     this.gameState = data.gameState;
+    this.playerId = data.playerId || null;
+    this.roomId = data.roomId || null;
+    this.opponentNickname = data.opponentNickname || null;
+    this.socketManager = data.socketManager || null;
+    this.isRemote = this.gameState.mode === 'remote';
+    this.remoteOwner = this.playerId === 'p2' ? 2 : 1;
+    if (this.isRemote) {
+      this.gameState = this.normalizeGameStateFromServer(this.gameState);
+    }
+
     this.turnSystem = new TurnSystem(this.gameState);
     this.aiSystem = new AISystem(this.gameState, MovementSystem, CombatSystem, this);
     this.aiSystem.onAction = (action) => this.handleAIAction(action);
-    this.pendingStartingPlayer = data.startingPlayer || 1;
-    this.gameState.turnNumber = 0;
-    this.gameState.inputLocked = false;
-    this.gameState.log = ['BATALLA INICIADA'];
+    this.pendingStartingPlayer = data.startingPlayer || this.gameState.currentPlayer || 1;
+    if (!this.isRemote) {
+      this.gameState.turnNumber = 0;
+      this.gameState.inputLocked = false;
+      this.gameState.log = ['BATALLA INICIADA'];
+    } else {
+      this.updateRemoteInputLock();
+    }
+
     this.aiTurnInProgress = false;
     this.aiThinkingTween = null;
     this.victoryShown = false;
+    this.remoteSocketHandlers = null;
+    this.opponentDisconnectedShown = false;
+    this.roomClosedShown = false;
+    this.rematchPromptElements = null;
+    this.rematchCountdownEvent = null;
+    this.rematchDeadlineAt = 0;
   }
 
   create() {
@@ -69,10 +92,20 @@ export class BattleScene extends Phaser.Scene {
       }
       this.clearSelection();
     });
-    this.turnSystem.startTurn(this.pendingStartingPlayer);
+    if (this.isRemote) {
+      this.turnSystem.clearSelection();
+      this.bindRemoteEvents();
+      this.updateRemoteInputLock();
+    } else {
+      this.turnSystem.startTurn(this.pendingStartingPlayer);
+    }
+
     this.updateBoard();
     this.updateBattleTitle();
     this.maybeRunAITurn();
+
+    this.events.once('shutdown', () => this.cleanupRemoteEvents());
+    this.events.once('destroy', () => this.cleanupRemoteEvents());
   }
 
   getActionAvailability(unit) {
@@ -177,6 +210,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    if (this.isRemote && !this.isLocalTurn()) {
+      return;
+    }
+
     if (action === 'move' && selectedUnit.specialLockedMove) {
       this.addLog(`${selectedUnit.name} NO PUEDE MOVERSE TRAS SU ESPECIAL`);
       return;
@@ -263,6 +300,16 @@ export class BattleScene extends Phaser.Scene {
       return false;
     }
 
+    if (this.isRemote) {
+      this.emitRemoteAction({
+        playerId: this.playerId,
+        type: 'move',
+        unitId: unit.id,
+        target: { x, y }
+      });
+      return true;
+    }
+
     const moved = MovementSystem.moveUnit(unit, { x, y }, this.gameState.units, GAME_CONFIG, match.cost);
     if (!moved) {
       return false;
@@ -288,6 +335,17 @@ export class BattleScene extends Phaser.Scene {
 
     const validTargets = CombatSystem.getValidTargets(attacker, actionType, this.gameState.units, GAME_CONFIG);
     if (!validTargets.includes(target)) {
+      return;
+    }
+
+    if (this.isRemote) {
+      this.emitRemoteAction({
+        playerId: this.playerId,
+        type: 'attack',
+        unitId: attacker.id,
+        attackType: actionType,
+        target: { x, y }
+      });
       return;
     }
 
@@ -340,6 +398,10 @@ export class BattleScene extends Phaser.Scene {
     const selectedUnit = this.getSelectedUnit();
     if (!selectedUnit) {
       this.gameState.selectedAction = 'preview';
+    }
+
+    if (this.isRemote) {
+      this.updateRemoteInputLock();
     }
 
     this.renderOverlays();
@@ -486,6 +548,13 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    if (this.isRemote) {
+      this.socketManager.emit('game:endturn', { playerId: this.playerId });
+      this.gameState.inputLocked = true;
+      this.refreshSelection();
+      return;
+    }
+
     this.hud.hideEndTurnConfirmation();
     this.hud.hideSurrenderConfirmation();
     this.turnSystem.endTurn();
@@ -497,6 +566,10 @@ export class BattleScene extends Phaser.Scene {
 
   tryEndTurnFromButton() {
     if (this.gameState.inputLocked) {
+      return;
+    }
+
+    if (this.isRemote && !this.isLocalTurn()) {
       return;
     }
 
@@ -528,6 +601,14 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    if (this.isRemote) {
+      this.emitRemoteAction({
+        playerId: this.playerId,
+        type: 'surrender'
+      });
+      return;
+    }
+
     const surrenderPlayer = this.gameState.currentPlayer;
     this.gameState.winner = surrenderPlayer === 1 ? 2 : 1;
     this.addLog(`${PLAYER_INFO[surrenderPlayer].name} SE RINDE`);
@@ -535,11 +616,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   updateBattleTitle() {
-    const modeText = this.gameState.mode === 'pve' ? 'BATTLE MODE: VS IA' : 'BATTLE MODE: HOT-SEAT';
+    let modeText = 'BATTLE MODE: HOT-SEAT';
+    if (this.gameState.mode === 'pve') {
+      modeText = 'BATTLE MODE: VS IA';
+    } else if (this.gameState.mode === 'remote') {
+      modeText = `BATTLE MODE: REMOTO (${this.playerId?.toUpperCase?.() || 'JUGADOR'})`;
+    }
+
     this.titleText.setText(modeText);
   }
 
   maybeRunAITurn() {
+    if (this.isRemote) {
+      return;
+    }
+
     if (this.gameState.mode !== 'pve' || this.gameState.currentPlayer !== 2 || this.gameState.winner || this.aiTurnInProgress) {
       return;
     }
@@ -609,9 +700,10 @@ export class BattleScene extends Phaser.Scene {
     this.hud.hideSurrenderConfirmation();
     this.lockCombatInteractionsForResult();
 
-    const winnerIsIA = this.gameState.mode === 'pve' && this.gameState.winner === 2;
-    const winnerText = winnerIsIA ? 'IA VICTORIOSA' : `JUGADOR ${this.gameState.winner} VICTORIOSO`;
-    const winnerColor = this.gameState.winner === 1 ? '#00f5ff' : '#ff00e5';
+    const numericWinner = this.normalizeWinner(this.gameState.winner);
+    const winnerIsIA = this.gameState.mode === 'pve' && numericWinner === 2;
+    const winnerText = winnerIsIA ? 'IA VICTORIOSA' : `JUGADOR ${numericWinner} VICTORIOSO`;
+    const winnerColor = numericWinner === 1 ? '#00f5ff' : '#ff00e5';
     const aliveCount = this.gameState.units.filter((unit) => unit.isAlive()).length;
     const eliminated = this.gameState.units.length - aliveCount;
 
@@ -637,10 +729,19 @@ export class BattleScene extends Phaser.Scene {
     });
 
     this.createResultButton(571, 504, 200, 48, 'JUGAR DE NUEVO', '#00f5ff', () => {
+      if (this.isRemote) {
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: true
+        });
+        return;
+      }
+
       this.scene.start('SetupScene', { mode: this.gameState.mode });
     });
 
     this.createResultButton(795, 504, 200, 48, 'MENÚ PRINCIPAL', '#ff00e5', () => {
+      this.socketManager?.disconnect?.();
       this.scene.start('MainScene');
     });
 
@@ -695,5 +796,377 @@ export class BattleScene extends Phaser.Scene {
 
     this.resultGroup.add(button);
     this.resultGroup.add(text);
+  }
+
+  showRematchPrompt(payload = {}) {
+    if (!this.isRemote) {
+      return;
+    }
+
+    if (!this.rematchPromptElements) {
+      const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.7).setDepth(250);
+      const panel = this.add.rectangle(683, 386, 520, 248, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
+        .setDepth(251)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.45)').color, 1);
+      const title = this.add.text(683, 316, 'REMATCH', {
+        fontFamily: 'monospace',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        color: '#00f5ff',
+        letterSpacing: 3
+      }).setOrigin(0.5).setDepth(252);
+      const subtitle = this.add.text(683, 360, 'CONFIRMA EN AMBOS CLIENTES', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: 'rgba(255,255,255,0.5)',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+      const status = this.add.text(683, 398, '', {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#ffffff',
+        align: 'center',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+      const timer = this.add.text(683, 432, '', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: 'rgba(255,255,255,0.65)',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+
+      const yesButton = this.add.rectangle(623, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+        .setDepth(252)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const yesText = this.add.text(623, 484, 'CONFIRMAR', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        color: '#39ff14',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(253);
+
+      const noButton = this.add.rectangle(743, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+        .setDepth(252)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const noText = this.add.text(743, 484, 'CANCELAR', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        color: '#ff3366',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(253);
+
+      yesButton.on('pointerover', () => {
+        if (!yesButton.input?.enabled) {
+          return;
+        }
+        yesButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.12);
+      });
+      yesButton.on('pointerout', () => {
+        yesButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#39ff14').color, 0);
+      });
+      yesButton.on('pointerdown', () => {
+        if (!yesButton.input?.enabled) {
+          return;
+        }
+
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: true
+        });
+      });
+
+      noButton.on('pointerover', () => {
+        if (!noButton.input?.enabled) {
+          return;
+        }
+        noButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.12);
+      });
+      noButton.on('pointerout', () => {
+        noButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0);
+      });
+      noButton.on('pointerdown', () => {
+        if (!noButton.input?.enabled) {
+          return;
+        }
+
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: false
+        });
+      });
+
+      this.rematchPromptElements = {
+        overlay,
+        panel,
+        title,
+        subtitle,
+        status,
+        timer,
+        yesButton,
+        yesText,
+        noButton,
+        noText
+      };
+    }
+
+    const accepted = payload.accepted || {};
+    const acceptedByLocal = Boolean(accepted[this.playerId]);
+    const localOpponentId = this.playerId === 'p1' ? 'p2' : 'p1';
+    const acceptedByOpponent = Boolean(accepted[localOpponentId]);
+    this.rematchDeadlineAt = Number(payload.deadlineAt) || (Date.now() + 5000);
+
+    const status = acceptedByLocal
+      ? (acceptedByOpponent ? 'CONFIRMACION COMPLETA. INICIANDO...' : 'CONFIRMACION ENVIADA. ESPERANDO OPONENTE...')
+      : (acceptedByOpponent ? 'OPONENTE CONFIRMO. ACEPTA O CANCELA.' : '¿ACEPTAS JUGAR DE NUEVO?');
+    this.rematchPromptElements.status.setText(status);
+    this.rematchPromptElements.yesButton.disableInteractive();
+    this.rematchPromptElements.noButton.disableInteractive();
+    if (!acceptedByLocal) {
+      this.rematchPromptElements.yesButton.setInteractive({ useHandCursor: true });
+    }
+    this.rematchPromptElements.noButton.setInteractive({ useHandCursor: true });
+
+    this.refreshRematchCountdown();
+    if (!this.rematchCountdownEvent) {
+      this.rematchCountdownEvent = this.time.addEvent({
+        delay: 150,
+        loop: true,
+        callback: () => this.refreshRematchCountdown()
+      });
+    }
+  }
+
+  refreshRematchCountdown() {
+    if (!this.rematchPromptElements?.timer) {
+      return;
+    }
+
+    const remainingMs = Math.max(0, this.rematchDeadlineAt - Date.now());
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    this.rematchPromptElements.timer.setText(`TIEMPO RESTANTE: ${remainingSeconds}s`);
+  }
+
+  clearRematchPrompt() {
+    if (this.rematchCountdownEvent) {
+      this.rematchCountdownEvent.remove(false);
+      this.rematchCountdownEvent = null;
+    }
+
+    if (!this.rematchPromptElements) {
+      return;
+    }
+
+    for (const element of Object.values(this.rematchPromptElements)) {
+      element.destroy();
+    }
+    this.rematchPromptElements = null;
+    this.rematchDeadlineAt = 0;
+  }
+
+  normalizeWinner(winner) {
+    if (winner === 'p1') {
+      return 1;
+    }
+
+    if (winner === 'p2') {
+      return 2;
+    }
+
+    return winner;
+  }
+
+  normalizeGameStateFromServer(rawState) {
+    const normalized = {
+      ...rawState,
+      winner: this.normalizeWinner(rawState.winner),
+      units: (rawState.units || []).map((rawUnit) => {
+        const template = UNIT_TEMPLATES[rawUnit.key];
+        const unit = Object.assign(Object.create(Unit.prototype), rawUnit);
+        unit.basicAttack = { ...rawUnit.basicAttack };
+        unit.specialAttack = { ...rawUnit.specialAttack };
+        unit.name = rawUnit.name || template?.name || rawUnit.key;
+        unit.symbol = rawUnit.symbol || template?.symbol || '?';
+        return unit;
+      })
+    };
+
+    if (!Array.isArray(normalized.log)) {
+      normalized.log = [];
+    }
+
+    return normalized;
+  }
+
+  isLocalTurn() {
+    if (!this.isRemote) {
+      return true;
+    }
+
+    return this.gameState.currentPlayer === this.remoteOwner;
+  }
+
+  updateRemoteInputLock() {
+    if (!this.isRemote) {
+      return;
+    }
+
+    this.gameState.inputLocked = !this.isLocalTurn() || Boolean(this.gameState.winner);
+  }
+
+  emitRemoteAction(payload) {
+    if (!this.socketManager) {
+      return;
+    }
+
+    this.socketManager.emit('game:action', payload);
+    this.gameState.inputLocked = true;
+    this.refreshSelection();
+  }
+
+  bindRemoteEvents() {
+    if (!this.isRemote || !this.socketManager) {
+      return;
+    }
+
+    this.remoteSocketHandlers = {
+      gameUpdate: (payload = {}) => {
+        if (!payload.gameState) {
+          return;
+        }
+
+        this.gameState = this.normalizeGameStateFromServer(payload.gameState);
+        this.turnSystem.gameState = this.gameState;
+        this.aiSystem.gameState = this.gameState;
+        this.updateRemoteInputLock();
+        this.refreshSelection();
+        this.updateBattleTitle();
+      },
+      gameInvalid: (payload = {}) => {
+        if (payload.reason) {
+          this.addLog(payload.reason);
+        }
+        this.updateRemoteInputLock();
+        this.refreshSelection();
+      },
+      gameOver: (payload = {}) => {
+        this.gameState.winner = this.normalizeWinner(payload.winner);
+        this.showVictoryScreen();
+      },
+      rematchPrompt: (payload = {}) => {
+        this.showRematchPrompt(payload);
+      },
+      rematchStarted: () => {
+        this.clearRematchPrompt();
+        this.scene.start('SetupScene', {
+          mode: 'remote',
+          playerId: this.playerId,
+          roomId: this.roomId,
+          opponentNickname: this.opponentNickname,
+          socketManager: this.socketManager
+        });
+      },
+      roomClosed: (payload = {}) => {
+        this.showRoomClosedOverlay(payload.reason);
+      },
+      opponentDisconnected: () => {
+        this.showOpponentDisconnectedOverlay();
+      }
+    };
+
+    this.socketManager.on('game:update', this.remoteSocketHandlers.gameUpdate);
+    this.socketManager.on('game:invalid', this.remoteSocketHandlers.gameInvalid);
+    this.socketManager.on('game:over', this.remoteSocketHandlers.gameOver);
+    this.socketManager.on('game:rematch_prompt', this.remoteSocketHandlers.rematchPrompt);
+    this.socketManager.on('game:rematch_started', this.remoteSocketHandlers.rematchStarted);
+    this.socketManager.on('room:closed', this.remoteSocketHandlers.roomClosed);
+    this.socketManager.on('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
+  }
+
+  cleanupRemoteEvents() {
+    if (!this.socketManager || !this.remoteSocketHandlers) {
+      this.clearRematchPrompt();
+      return;
+    }
+
+    this.socketManager.off('game:update', this.remoteSocketHandlers.gameUpdate);
+    this.socketManager.off('game:invalid', this.remoteSocketHandlers.gameInvalid);
+    this.socketManager.off('game:over', this.remoteSocketHandlers.gameOver);
+    this.socketManager.off('game:rematch_prompt', this.remoteSocketHandlers.rematchPrompt);
+    this.socketManager.off('game:rematch_started', this.remoteSocketHandlers.rematchStarted);
+    this.socketManager.off('room:closed', this.remoteSocketHandlers.roomClosed);
+    this.socketManager.off('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
+    this.remoteSocketHandlers = null;
+    this.clearRematchPrompt();
+  }
+
+  showRoomClosedOverlay(reason) {
+    if (this.roomClosedShown) {
+      return;
+    }
+
+    this.roomClosedShown = true;
+    this.clearRematchPrompt();
+    this.gameState.inputLocked = true;
+    this.lockCombatInteractionsForResult();
+
+    const reasonTextMap = {
+      REMATCH_CANCELLED: 'REMATCH CANCELADO',
+      REMATCH_TIMEOUT: 'REMATCH SIN CONFIRMACION'
+    };
+    const subtitle = reasonTextMap[reason] || 'SALA CERRADA';
+    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
+    const title = this.add.text(683, 338, 'SALA CERRADA', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      fontStyle: 'bold',
+      color: '#ff3366',
+      letterSpacing: 3
+    }).setOrigin(0.5).setDepth(241);
+    const subtitleText = this.add.text(683, 380, subtitle, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: 'rgba(255,255,255,0.65)',
+      letterSpacing: 2
+    }).setOrigin(0.5).setDepth(241);
+
+    this.createResultButton(683, 446, 240, 48, 'VOLVER AL LOBBY', '#00f5ff', () => {
+      this.scene.start('LobbyScene');
+    });
+
+    this.resultGroup.add(overlay);
+    this.resultGroup.add(title);
+    this.resultGroup.add(subtitleText);
+  }
+
+  showOpponentDisconnectedOverlay() {
+    if (this.opponentDisconnectedShown) {
+      return;
+    }
+
+    this.opponentDisconnectedShown = true;
+    this.clearRematchPrompt();
+    this.gameState.inputLocked = true;
+    this.lockCombatInteractionsForResult();
+
+    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
+    const title = this.add.text(683, 338, 'OPONENTE DESCONECTADO', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      fontStyle: 'bold',
+      color: '#ff3366',
+      letterSpacing: 3
+    }).setOrigin(0.5).setDepth(241);
+
+    this.createResultButton(683, 430, 240, 48, 'VOLVER AL MENÚ', '#00f5ff', () => {
+      this.socketManager?.disconnect?.();
+      this.scene.start('MainScene');
+    });
+
+    this.resultGroup.add(overlay);
+    this.resultGroup.add(title);
   }
 }
