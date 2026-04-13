@@ -40,15 +40,14 @@
   - Orthogonal movement costs `1 AP`, diagonal movement costs `2 AP`.
   - Occupancy checks use `"x,y"` keys (`cellKey(...)`) in movement/combat helpers.
 
-## Multiplayer online (Fase 3)
+## Multiplayer online (Fases 1-4)
 
-- **Lobby scene flow**: `src/scenes/LobbyScene.js` maneja 4 estados visuales (`entry`, `created`, `join`, `ready`) para nickname, creación/unión de sala y transición a setup remoto.
-- **Socket singleton**: `src/SocketManager.js` centraliza conexión, listeners y emisión de eventos con una sola instancia compartida entre escenas.
-- **Remote setup/battle**:
-  - `SetupScene` en `remote` solo despliega unidades del jugador local y envía `game:setup`.
-  - `BattleScene` en `remote` emite acciones al servidor y aplica `game:update` para re-render autoritativo.
+- **Fase 1 / networking-base**: `server/src/server.js` expone el backend Node.js + Socket.IO y `src/SocketManager.js` centraliza la conexión del cliente.
+- **Fase 2 / lobby-room**: `src/scenes/LobbyScene.js` maneja 4 estados visuales (`entry`, `created`, `join`, `ready`) para nickname, creación/unión de sala y transición a setup remoto.
+- **Fase 3 / state-sync**: `SetupScene` en `remote` solo despliega unidades del jugador local y envía `game:setup`; `BattleScene` en `remote` emite acciones al servidor y aplica `game:update` para re-render autoritativo.
+- **Fase 4 / turn-sync**: el backend valida acciones con `GameValidator`, maneja desconexión de oponente y cierra sala con `room:closed` cuando corresponde.
+- **Estado actual**: el rematch remoto ya quedó integrado en `v0.3.1` con `game:rematch_prompt`, `game:rematch_response` y `game:rematch_started`.
 - **Server structure**: el backend está en `../server/src/` con `server.js`, `RoomManager.js` y `GameValidator.js`.
-- **Pendiente rematch remoto**: `JUGAR DE NUEVO` debe coordinar confirmación de ambos jugadores (timeout 5s), alternar jugador inicial y cerrar sala si no hay doble confirmación.
 
 ## Socket.IO events
 
@@ -68,4 +67,8 @@
 | `game:update` | S→C | `{ gameState, lastAction }` |
 | `game:invalid` | S→C | `{ reason }` |
 | `game:over` | S→C | `{ winner }` |
+| `game:rematch_response` | C→S | `{ playerId, accepted }` |
+| `game:rematch_prompt` | S→C | `{ deadlineAt }` |
+| `game:rematch_started` | S→C | `{ gameState, startingPlayer }` |
+| `room:closed` | S→C | `{ reason }` |
 | `room:opponent_disconnected` | S→C | `{}` |

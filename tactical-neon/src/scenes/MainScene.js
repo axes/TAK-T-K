@@ -104,7 +104,7 @@ export class MainScene extends Phaser.Scene {
       button.text.setAlpha(0);
     }
 
-    const versionText = this.add.text(1346, 748, 'v0.3.0 — FASE 3', {
+    const versionText = this.add.text(1346, 748, 'v0.3.1 — FASE 3', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: 'rgba(255,255,255,0.15)'

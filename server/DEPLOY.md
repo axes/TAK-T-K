@@ -5,7 +5,7 @@
 1. Crear cuenta en [railway.app](https://railway.app).
 2. Crear **New Project** y elegir **Deploy from GitHub repo**.
 3. Seleccionar `TAK-T-K` y configurar **Root Directory** en `server/`.
-4. Variables de entorno: `PORT` (Railway la define automáticamente).
+4. Variables de entorno: `PORT` (Railway la define automáticamente) y, si el cliente se publica en otro dominio, `CLIENT_URL` o `PRODUCTION_CLIENT_URL`.
 5. Start command: `npm start`.
 6. Copiar la URL generada (ejemplo: `https://tak-t-k.railway.app`).
 7. En el cliente (`tactical-neon/.env.local`) configurar:
@@ -18,6 +18,13 @@
 3. Configurar **Root Directory** en `server/`.
 4. Build command: `npm install`.
 5. Start command: `npm start`.
-6. Plan: **Free**.
-7. Copiar la URL publicada y configurarla en:
+6. Variables de entorno: `PORT`, `CLIENT_URL` y/o `PRODUCTION_CLIENT_URL` según la URL pública del cliente.
+7. Plan: **Free**.
+8. Copiar la URL publicada y configurarla en:
    `tactical-neon/.env.local` con `VITE_SERVER_URL=https://...`
+
+## STAGING
+
+1. Mantener una URL pública del servidor para pruebas remotas.
+2. Configurar el cliente con esa URL en `tactical-neon/.env.local` antes de publicar la build final.
+3. Verificar `GET /health` y luego abrir dos pestañas con el cliente para probar lobby, setup, partida y rematch.

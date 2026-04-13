@@ -1,8 +1,14 @@
-# TAC-T-K
+# TAK-T-K
 
-TAC-T-K es un juego táctico por turnos para navegador, construido como una base abierta para experimentar, aprender y derivar nuevas versiones. El nombre juega con la palabra **TACTICA** y refleja la intención del proyecto: una mezcla de sistema táctico, combate por turnos y una estructura pensada para crecer.
+TAK-T-K es un juego táctico por turnos para navegador, construido como una base abierta para experimentar, aprender y derivar nuevas versiones. El nombre juega con la palabra **TACTICA** y refleja la intención del proyecto: una mezcla de sistema táctico, combate por turnos y una estructura pensada para crecer.
 
 Este proyecto está siendo **vibecodeado**: iterado con ayuda de múltiples herramientas y mucha prueba práctica. En el proceso han participado **Claude**, **GPT**, **Copilot**, más bastante **café** y **amor**.
+
+## Versión actual
+
+- referencia de release: **v0.3.1**
+- tag sugerida para el corte estable: **v0.3.1**
+- plan de staging: [PLAN-STAGING.md](PLAN-STAGING.md)
 
 ## Qué es
 
@@ -34,7 +40,7 @@ Este repositorio es **totalmente libre** para aprender, experimentar, bifurcar y
 - agrega multijugador
 - convierte el prototipo en otro juego táctico distinto
 
-La idea es que TAC-T-K sirva como un punto de partida limpio, entendible y flexible.
+La idea es que TAK-T-K sirva como un punto de partida limpio, entendible y flexible.
 
 ## Cómo ejecutarlo en local
 
@@ -90,9 +96,21 @@ La base actual incluye:
 - turnos hot-seat
 - movimiento por PA
 - combate con habilidades
+- multijugador remoto con lobby, sincronización de estado, rematch y cierre de sala
 - HUD rediseñado por zonas (header, tablero, panel, footer)
 - flujo de acciones más claro para selección/movimiento por defecto
 - botón de fin de turno con confirmación contextual integrada
+
+## Multiplayer por fases
+
+La implementación quedó ordenada en cuatro sesiones/ramas:
+
+- `networking-base`: servidor Node.js + `SocketManager`
+- `lobby-room`: `LobbyScene` + card `REMOTO` en `MainScene`
+- `state-sync`: `SetupScene` y `BattleScene` en modo remoto
+- `turn-sync`: validación en servidor con `GameValidator` y manejo de desconexión
+
+La documentación de despliegue y staging vive en [server/DEPLOY.md](server/DEPLOY.md) y [PLAN-STAGING.md](PLAN-STAGING.md).
 
 ## Cambios recientes (abril 2026)
 
