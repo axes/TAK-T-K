@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-04-13 — push a `fix/actions-changelog-permissions`
+
+- fix(actions): grant contents write for changelog push
+
+
 ## [v0.2.0] — 2026-04-12 — Fase 2
 
 ### Agregado

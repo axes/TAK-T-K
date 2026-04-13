@@ -5,6 +5,9 @@ on:
     branches-ignore:
       - gh-pages
 
+permissions:
+  contents: write
+
 jobs:
   changelog:
     runs-on: ubuntu-latest
