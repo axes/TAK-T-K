@@ -2,6 +2,11 @@
 
 ## 2026-04-13 — push a `feature/fase3-client-lobby-socket`
 
+- feat(multiplayer): add remote rematch handshake flow
+
+
+## 2026-04-13 — push a `feature/fase3-client-lobby-socket`
+
 - feat(server): add multiplayer room backend
 - feat(remote): add lobby and socket flow
 
