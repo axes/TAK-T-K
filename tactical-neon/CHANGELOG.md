@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [v0.3.0] — 2026-04-13 — Fase 3
+
+### Agregado
+- Servidor Node.js + Socket.IO en `server/`.
+- `LobbyScene`: creación y unión a salas por ID.
+- `SocketManager`: wrapper cliente de Socket.IO.
+- Modo `remote` en `SetupScene` y `BattleScene`.
+- Validación de acciones en servidor (`GameValidator`).
+- Instrucciones de deploy en `server/DEPLOY.md`.
+
+### Modificado
+- `MainScene`: card `REMOTO` habilitada.
+- `config.js`: `SERVER_URL` desde variable de entorno.
+
+### Pendiente (próxima sesión)
+- Flujo de "JUGAR DE NUEVO" en `remote`: confirmar rematch en ambos clientes con timeout (5s).
+- Si ambos confirman rematch: reiniciar partida en la misma sala y alternar jugador inicial respecto a la partida anterior.
+- Si uno cancela o vence timeout: cerrar sala remota y notificar salida limpia en ambos clientes.
+
 ## [v0.2.1] — 2026-04-13 — Ajustes cliente
 
 ### Agregado

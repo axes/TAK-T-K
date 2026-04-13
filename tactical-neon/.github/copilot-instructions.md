@@ -33,8 +33,39 @@
 - **Selection is centralized in `TurnSystem`**: scenes should read/change selected unit through `TurnSystem` (`selectUnit`, `clearSelection`, `getSelectedUnit`) instead of ad-hoc state writes.
 - **End-turn behavior is HUD-driven**: `HUD` emits `onEndTurn`; `BattleScene.tryEndTurnFromButton()` opens confirmation when the active player still has actions and ends immediately otherwise.
 - **Mode and input flags live in `gameState`**: `gameState.mode` uses `'pvp' | 'pve'`; `gameState.inputLocked` blocks board/HUD interaction during AI execution.
+- **Remote mode**: `gameState.mode` also supports `'remote'`, where authoritative game state and action validation come from the Socket.IO server.
 - **Unit identity and lifecycle**: units are pre-created from `UNIT_ORDER`/`UNIT_TEMPLATES`, then placed during setup; defeated units remain in `gameState.units` and are filtered via `unit.isAlive()`.
 - **Grid math conventions**:
   - Positions are `{ x, y }` in grid coordinates.
   - Orthogonal movement costs `1 AP`, diagonal movement costs `2 AP`.
   - Occupancy checks use `"x,y"` keys (`cellKey(...)`) in movement/combat helpers.
+
+## Multiplayer online (Fase 3)
+
+- **Lobby scene flow**: `src/scenes/LobbyScene.js` maneja 4 estados visuales (`entry`, `created`, `join`, `ready`) para nickname, creación/unión de sala y transición a setup remoto.
+- **Socket singleton**: `src/SocketManager.js` centraliza conexión, listeners y emisión de eventos con una sola instancia compartida entre escenas.
+- **Remote setup/battle**:
+  - `SetupScene` en `remote` solo despliega unidades del jugador local y envía `game:setup`.
+  - `BattleScene` en `remote` emite acciones al servidor y aplica `game:update` para re-render autoritativo.
+- **Server structure**: el backend está en `../server/src/` con `server.js`, `RoomManager.js` y `GameValidator.js`.
+- **Pendiente rematch remoto**: `JUGAR DE NUEVO` debe coordinar confirmación de ambos jugadores (timeout 5s), alternar jugador inicial y cerrar sala si no hay doble confirmación.
+
+## Socket.IO events
+
+| Event | Direction | Payload |
+| --- | --- | --- |
+| `room:create` | C→S | `{ nickname }` |
+| `room:created` | S→C | `{ roomId, playerId }` |
+| `room:waiting` | S→C | `{}` |
+| `room:join` | C→S | `{ roomId, nickname }` |
+| `room:joined` | S→C | `{ playerId }` |
+| `room:ready` | S→C | `{ opponent }` |
+| `room:error` | S→C | `{ msg }` |
+| `game:setup` | C→S | `{ playerId, placements }` |
+| `game:start` | S→C | `{ startingPlayer, gameState }` |
+| `game:action` | C→S | `{ playerId, type, unitId?, attackType?, target? }` |
+| `game:endturn` | C→S | `{ playerId }` |
+| `game:update` | S→C | `{ gameState, lastAction }` |
+| `game:invalid` | S→C | `{ reason }` |
+| `game:over` | S→C | `{ winner }` |
+| `room:opponent_disconnected` | S→C | `{}` |

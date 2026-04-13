@@ -78,3 +78,9 @@ export const HUD_LAYOUT = {
   rightX: 680,
   bottomPanelY: 816
 };
+
+const viteServerUrl = typeof import.meta !== 'undefined' && import.meta.env
+  ? import.meta.env.VITE_SERVER_URL
+  : undefined;
+
+export const SERVER_URL = viteServerUrl || 'http://localhost:3000';

@@ -85,13 +85,12 @@ export class MainScene extends Phaser.Scene {
         x: 819,
         y: 356,
         title: 'REMOTO',
-        subtitle: 'PRÓXIMAMENTE',
-        normalBorder: 'rgba(255,255,255,0.1)',
-        hoverBorder: 'rgba(255,255,255,0.1)',
-        hoverFill: null,
-        titleColor: 'rgba(255,255,255,0.25)',
-        disabled: true,
-        showPhaseBadge: true
+        subtitle: 'SALAS PRIVADAS\nPOR CODIGO',
+        normalBorder: 'rgba(255,170,0,0.35)',
+        hoverBorder: 'rgba(255,170,0,0.85)',
+        hoverFill: 'rgba(255,170,0,0.08)',
+        titleColor: '#ffaa00',
+        onClick: () => this.scene.start('LobbyScene')
       })
     ];
 
@@ -105,7 +104,7 @@ export class MainScene extends Phaser.Scene {
       button.text.setAlpha(0);
     }
 
-    const versionText = this.add.text(1346, 748, 'v0.2.0 — FASE 2', {
+    const versionText = this.add.text(1346, 748, 'v0.3.0 — FASE 3', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: 'rgba(255,255,255,0.15)'
