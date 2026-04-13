@@ -16,6 +16,7 @@ export class SetupScene extends Phaser.Scene {
       2: 0
     };
     this.isAutoPlacing = false;
+    this.isExitConfirmOpen = false;
   }
 
   create() {
@@ -44,7 +45,106 @@ export class SetupScene extends Phaser.Scene {
     });
 
     this.drawBoard();
+    this.createExitControls();
     this.refreshSetupStatus();
+  }
+
+  createExitControls() {
+    this.exitLink = this.add.text(1306, 736, 'TERMINAR PARTIDA', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: 'rgba(255,255,255,0.35)',
+      letterSpacing: 2
+    }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true }).setDepth(30);
+
+    this.exitUnderline = this.add.rectangle(1306 - this.exitLink.width / 2, 744, this.exitLink.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.25)').color, 1)
+      .setVisible(false)
+      .setDepth(30);
+
+    this.exitLink.on('pointerover', () => {
+      this.exitLink.setColor('#ff3366');
+      this.exitUnderline.setVisible(true);
+    });
+    this.exitLink.on('pointerout', () => {
+      this.exitLink.setColor('rgba(255,255,255,0.35)');
+      this.exitUnderline.setVisible(false);
+    });
+    this.exitLink.on('pointerdown', () => {
+      if (this.isExitConfirmOpen) {
+        return;
+      }
+      this.showExitConfirmation();
+    });
+
+    this.exitConfirmContainer = this.add.container(0, 0).setDepth(200).setVisible(false);
+    const overlay = this.add.rectangle(683, 384, GAME_CONFIG.width, GAME_CONFIG.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.72);
+    const panel = this.add.rectangle(683, 384, 420, 170, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.5)').color, 1);
+    const title = this.add.text(683, 350, 'TERMINAR PARTIDA', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: COLORS.text,
+      letterSpacing: 3
+    }).setOrigin(0.5);
+    const message = this.add.text(683, 382, '¿SEGURO QUE QUIERES VOLVER AL MENÚ PRINCIPAL?', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: 'rgba(255,255,255,0.6)',
+      align: 'center',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    const confirmYesBg = this.add.rectangle(623, 426, 110, 32, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+      .setInteractive({ useHandCursor: true });
+    const confirmYesText = this.add.text(623, 426, 'SI, SALIR', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: '#ff3366',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    const confirmNoBg = this.add.rectangle(743, 426, 110, 32, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.4)').color, 1)
+      .setInteractive({ useHandCursor: true });
+    const confirmNoText = this.add.text(743, 426, 'NO', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: 'rgba(255,255,255,0.85)',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    confirmYesBg.on('pointerover', () => confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.12));
+    confirmYesBg.on('pointerout', () => confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0));
+    confirmNoBg.on('pointerover', () => confirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0.08));
+    confirmNoBg.on('pointerout', () => confirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0));
+
+    confirmYesBg.on('pointerdown', () => {
+      this.hideExitConfirmation();
+      this.scene.start('MainScene');
+    });
+    confirmNoBg.on('pointerdown', () => this.hideExitConfirmation());
+
+    this.exitConfirmContainer.add([
+      overlay,
+      panel,
+      title,
+      message,
+      confirmYesBg,
+      confirmYesText,
+      confirmNoBg,
+      confirmNoText
+    ]);
+  }
+
+  showExitConfirmation() {
+    this.isExitConfirmOpen = true;
+    this.exitConfirmContainer.setVisible(true);
+  }
+
+  hideExitConfirmation() {
+    this.isExitConfirmOpen = false;
+    this.exitConfirmContainer.setVisible(false);
   }
 
   drawBoard() {
@@ -71,7 +171,7 @@ export class SetupScene extends Phaser.Scene {
   }
 
   handleCellClick(x, y) {
-    if (this.isAutoPlacing) {
+    if (this.isAutoPlacing || this.isExitConfirmOpen) {
       return;
     }
 
