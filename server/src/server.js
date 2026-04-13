@@ -8,6 +8,7 @@ import { RoomManager } from './RoomManager.js';
 import { GameValidator } from './GameValidator.js';
 
 const PORT = Number(process.env.PORT || 3000);
+const REMATCH_TIMEOUT_MS = 5000;
 const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173'
@@ -129,7 +130,7 @@ function startTurn(gameState, owner) {
   }
 }
 
-function buildInitialGameState(room) {
+function buildInitialGameState(room, forcedStartingOwner = null) {
   const units = [];
 
   for (const [playerId, owner] of [['p1', 1], ['p2', 2]]) {
@@ -142,13 +143,16 @@ function buildInitialGameState(room) {
     }
   }
 
-  const startingOwner = Math.random() < 0.5 ? 1 : 2;
+  const startingOwner = forcedStartingOwner === 1 || forcedStartingOwner === 2
+    ? forcedStartingOwner
+    : (Math.random() < 0.5 ? 1 : 2);
   const gameState = {
     phase: 'battle',
     mode: 'remote',
     inputLocked: false,
     setupPlayer: 1,
     currentPlayer: startingOwner,
+    startingPlayerOwner: startingOwner,
     turnNumber: 0,
     winner: null,
     selectedUnitId: null,
@@ -212,6 +216,27 @@ function emitWinnerIfAny(room) {
   io.to(room.id).emit('game:over', { winner });
 }
 
+function clearRematchState(room) {
+  if (!room?.rematch) {
+    return;
+  }
+
+  if (room.rematch.timer) {
+    clearTimeout(room.rematch.timer);
+  }
+  room.rematch = null;
+}
+
+function closeRoomWithReason(room, reason) {
+  if (!room) {
+    return;
+  }
+
+  clearRematchState(room);
+  io.to(room.id).emit('room:closed', { reason });
+  roomManager.closeRoom(room.id);
+}
+
 io.on('connection', (socket) => {
   console.log(`[SOCKET] CONECTADO ${socket.id}`);
 
@@ -271,12 +296,83 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.gameState = buildInitialGameState(room);
+    const forcedStartingOwner = room.nextStartingOwner;
+    room.gameState = buildInitialGameState(room, forcedStartingOwner);
+    room.lastStartingOwner = room.gameState.startingPlayerOwner;
+    room.nextStartingOwner = null;
     room.status = 'playing';
     io.to(room.id).emit('game:start', {
       startingPlayer: room.gameState.currentPlayer === 1 ? 'p1' : 'p2',
       gameState: toPublicGameState(room.gameState)
     });
+  });
+
+  socket.on('game:rematch_response', (payload = {}) => {
+    const room = roomManager.getRoomBySocket(socket.id);
+    if (!room || room.status !== 'finished') {
+      socket.emit('game:invalid', { reason: 'REMATCH NO DISPONIBLE' });
+      return;
+    }
+
+    const socketPlayerId = getPlayerIdBySocket(room, socket.id);
+    if (!socketPlayerId || payload.playerId !== socketPlayerId) {
+      socket.emit('game:invalid', { reason: 'JUGADOR INVALIDO' });
+      return;
+    }
+
+    if (!room.players.p2) {
+      socket.emit('game:invalid', { reason: 'FALTA OPONENTE' });
+      return;
+    }
+
+    if (payload.accept === false) {
+      closeRoomWithReason(room, 'REMATCH_CANCELLED');
+      return;
+    }
+
+    if (!room.rematch) {
+      room.rematch = {
+        deadlineAt: Date.now() + REMATCH_TIMEOUT_MS,
+        accepted: { p1: false, p2: false },
+        timer: null
+      };
+      room.rematch.timer = setTimeout(() => {
+        const activeRoom = roomManager.getRoom(room.id);
+        if (!activeRoom?.rematch) {
+          return;
+        }
+
+        closeRoomWithReason(activeRoom, 'REMATCH_TIMEOUT');
+      }, REMATCH_TIMEOUT_MS);
+    }
+
+    if (Date.now() > room.rematch.deadlineAt) {
+      closeRoomWithReason(room, 'REMATCH_TIMEOUT');
+      return;
+    }
+
+    room.rematch.accepted[socketPlayerId] = true;
+    io.to(room.id).emit('game:rematch_prompt', {
+      deadlineAt: room.rematch.deadlineAt,
+      accepted: room.rematch.accepted,
+      timeoutMs: REMATCH_TIMEOUT_MS
+    });
+
+    if (!room.rematch.accepted.p1 || !room.rematch.accepted.p2) {
+      return;
+    }
+
+    clearRematchState(room);
+    if (room.lastStartingOwner === 1 || room.lastStartingOwner === 2) {
+      room.nextStartingOwner = room.lastStartingOwner === 1 ? 2 : 1;
+    } else {
+      room.nextStartingOwner = null;
+    }
+    const nextStartingPlayer = room.nextStartingOwner === 1
+      ? 'p1'
+      : (room.nextStartingOwner === 2 ? 'p2' : null);
+    roomManager.resetRoomForRematch(room.id);
+    io.to(room.id).emit('game:rematch_started', { nextStartingPlayer });
   });
 
   socket.on('game:action', (payload = {}) => {
@@ -347,6 +443,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    const currentRoom = roomManager.getRoomBySocket(socket.id);
+    clearRematchState(currentRoom);
     const removal = roomManager.removeSocket(socket.id);
     console.log(`[SOCKET] DESCONECTADO ${socket.id}`);
     if (!removal?.opponentSocketId) {

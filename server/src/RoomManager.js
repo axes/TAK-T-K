@@ -16,7 +16,10 @@ export class RoomManager {
         p2: null
       },
       gameState: null,
-      status: 'waiting'
+      status: 'waiting',
+      lastStartingOwner: null,
+      nextStartingOwner: null,
+      rematch: null
     };
 
     this.rooms.set(roomId, room);
@@ -89,6 +92,39 @@ export class RoomManager {
     }
 
     return { roomId, disconnectedPlayerId: null, opponentSocketId: null, deletedRoom: false };
+  }
+
+  resetRoomForRematch(roomId) {
+    const room = this.getRoom(roomId);
+    if (!room || !room.players.p1 || !room.players.p2) {
+      return null;
+    }
+
+    room.status = 'setup';
+    room.gameState = null;
+    room.rematch = null;
+    room.players.p1.ready = false;
+    room.players.p1.setup = null;
+    room.players.p2.ready = false;
+    room.players.p2.setup = null;
+    return room;
+  }
+
+  closeRoom(roomId) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      return false;
+    }
+
+    const sockets = [room.players.p1?.socketId, room.players.p2?.socketId];
+    for (const socketId of sockets) {
+      if (socketId) {
+        this.socketToRoom.delete(socketId);
+      }
+    }
+
+    this.rooms.delete(room.id);
+    return true;
   }
 
   generateRoomId() {

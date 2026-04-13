@@ -49,6 +49,10 @@ export class BattleScene extends Phaser.Scene {
     this.victoryShown = false;
     this.remoteSocketHandlers = null;
     this.opponentDisconnectedShown = false;
+    this.roomClosedShown = false;
+    this.rematchPromptElements = null;
+    this.rematchCountdownEvent = null;
+    this.rematchDeadlineAt = 0;
   }
 
   create() {
@@ -726,8 +730,10 @@ export class BattleScene extends Phaser.Scene {
 
     this.createResultButton(571, 504, 200, 48, 'JUGAR DE NUEVO', '#00f5ff', () => {
       if (this.isRemote) {
-        this.socketManager?.disconnect?.();
-        this.scene.start('LobbyScene');
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: true
+        });
         return;
       }
 
@@ -790,6 +796,175 @@ export class BattleScene extends Phaser.Scene {
 
     this.resultGroup.add(button);
     this.resultGroup.add(text);
+  }
+
+  showRematchPrompt(payload = {}) {
+    if (!this.isRemote) {
+      return;
+    }
+
+    if (!this.rematchPromptElements) {
+      const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.7).setDepth(250);
+      const panel = this.add.rectangle(683, 386, 520, 248, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
+        .setDepth(251)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.45)').color, 1);
+      const title = this.add.text(683, 316, 'REMATCH', {
+        fontFamily: 'monospace',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        color: '#00f5ff',
+        letterSpacing: 3
+      }).setOrigin(0.5).setDepth(252);
+      const subtitle = this.add.text(683, 360, 'CONFIRMA EN AMBOS CLIENTES', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: 'rgba(255,255,255,0.5)',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+      const status = this.add.text(683, 398, '', {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#ffffff',
+        align: 'center',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+      const timer = this.add.text(683, 432, '', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: 'rgba(255,255,255,0.65)',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(252);
+
+      const yesButton = this.add.rectangle(623, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+        .setDepth(252)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const yesText = this.add.text(623, 484, 'CONFIRMAR', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        color: '#39ff14',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(253);
+
+      const noButton = this.add.rectangle(743, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+        .setDepth(252)
+        .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const noText = this.add.text(743, 484, 'CANCELAR', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        color: '#ff3366',
+        letterSpacing: 1
+      }).setOrigin(0.5).setDepth(253);
+
+      yesButton.on('pointerover', () => {
+        if (!yesButton.input?.enabled) {
+          return;
+        }
+        yesButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.12);
+      });
+      yesButton.on('pointerout', () => {
+        yesButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#39ff14').color, 0);
+      });
+      yesButton.on('pointerdown', () => {
+        if (!yesButton.input?.enabled) {
+          return;
+        }
+
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: true
+        });
+      });
+
+      noButton.on('pointerover', () => {
+        if (!noButton.input?.enabled) {
+          return;
+        }
+        noButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.12);
+      });
+      noButton.on('pointerout', () => {
+        noButton.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0);
+      });
+      noButton.on('pointerdown', () => {
+        if (!noButton.input?.enabled) {
+          return;
+        }
+
+        this.socketManager?.emit('game:rematch_response', {
+          playerId: this.playerId,
+          accept: false
+        });
+      });
+
+      this.rematchPromptElements = {
+        overlay,
+        panel,
+        title,
+        subtitle,
+        status,
+        timer,
+        yesButton,
+        yesText,
+        noButton,
+        noText
+      };
+    }
+
+    const accepted = payload.accepted || {};
+    const acceptedByLocal = Boolean(accepted[this.playerId]);
+    const localOpponentId = this.playerId === 'p1' ? 'p2' : 'p1';
+    const acceptedByOpponent = Boolean(accepted[localOpponentId]);
+    this.rematchDeadlineAt = Number(payload.deadlineAt) || (Date.now() + 5000);
+
+    const status = acceptedByLocal
+      ? (acceptedByOpponent ? 'CONFIRMACION COMPLETA. INICIANDO...' : 'CONFIRMACION ENVIADA. ESPERANDO OPONENTE...')
+      : (acceptedByOpponent ? 'OPONENTE CONFIRMO. ACEPTA O CANCELA.' : '¿ACEPTAS JUGAR DE NUEVO?');
+    this.rematchPromptElements.status.setText(status);
+    this.rematchPromptElements.yesButton.disableInteractive();
+    this.rematchPromptElements.noButton.disableInteractive();
+    if (!acceptedByLocal) {
+      this.rematchPromptElements.yesButton.setInteractive({ useHandCursor: true });
+    }
+    this.rematchPromptElements.noButton.setInteractive({ useHandCursor: true });
+
+    this.refreshRematchCountdown();
+    if (!this.rematchCountdownEvent) {
+      this.rematchCountdownEvent = this.time.addEvent({
+        delay: 150,
+        loop: true,
+        callback: () => this.refreshRematchCountdown()
+      });
+    }
+  }
+
+  refreshRematchCountdown() {
+    if (!this.rematchPromptElements?.timer) {
+      return;
+    }
+
+    const remainingMs = Math.max(0, this.rematchDeadlineAt - Date.now());
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    this.rematchPromptElements.timer.setText(`TIEMPO RESTANTE: ${remainingSeconds}s`);
+  }
+
+  clearRematchPrompt() {
+    if (this.rematchCountdownEvent) {
+      this.rematchCountdownEvent.remove(false);
+      this.rematchCountdownEvent = null;
+    }
+
+    if (!this.rematchPromptElements) {
+      return;
+    }
+
+    for (const element of Object.values(this.rematchPromptElements)) {
+      element.destroy();
+    }
+    this.rematchPromptElements = null;
+    this.rematchDeadlineAt = 0;
   }
 
   normalizeWinner(winner) {
@@ -881,6 +1056,22 @@ export class BattleScene extends Phaser.Scene {
         this.gameState.winner = this.normalizeWinner(payload.winner);
         this.showVictoryScreen();
       },
+      rematchPrompt: (payload = {}) => {
+        this.showRematchPrompt(payload);
+      },
+      rematchStarted: () => {
+        this.clearRematchPrompt();
+        this.scene.start('SetupScene', {
+          mode: 'remote',
+          playerId: this.playerId,
+          roomId: this.roomId,
+          opponentNickname: this.opponentNickname,
+          socketManager: this.socketManager
+        });
+      },
+      roomClosed: (payload = {}) => {
+        this.showRoomClosedOverlay(payload.reason);
+      },
       opponentDisconnected: () => {
         this.showOpponentDisconnectedOverlay();
       }
@@ -889,19 +1080,66 @@ export class BattleScene extends Phaser.Scene {
     this.socketManager.on('game:update', this.remoteSocketHandlers.gameUpdate);
     this.socketManager.on('game:invalid', this.remoteSocketHandlers.gameInvalid);
     this.socketManager.on('game:over', this.remoteSocketHandlers.gameOver);
+    this.socketManager.on('game:rematch_prompt', this.remoteSocketHandlers.rematchPrompt);
+    this.socketManager.on('game:rematch_started', this.remoteSocketHandlers.rematchStarted);
+    this.socketManager.on('room:closed', this.remoteSocketHandlers.roomClosed);
     this.socketManager.on('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
   }
 
   cleanupRemoteEvents() {
     if (!this.socketManager || !this.remoteSocketHandlers) {
+      this.clearRematchPrompt();
       return;
     }
 
     this.socketManager.off('game:update', this.remoteSocketHandlers.gameUpdate);
     this.socketManager.off('game:invalid', this.remoteSocketHandlers.gameInvalid);
     this.socketManager.off('game:over', this.remoteSocketHandlers.gameOver);
+    this.socketManager.off('game:rematch_prompt', this.remoteSocketHandlers.rematchPrompt);
+    this.socketManager.off('game:rematch_started', this.remoteSocketHandlers.rematchStarted);
+    this.socketManager.off('room:closed', this.remoteSocketHandlers.roomClosed);
     this.socketManager.off('room:opponent_disconnected', this.remoteSocketHandlers.opponentDisconnected);
     this.remoteSocketHandlers = null;
+    this.clearRematchPrompt();
+  }
+
+  showRoomClosedOverlay(reason) {
+    if (this.roomClosedShown) {
+      return;
+    }
+
+    this.roomClosedShown = true;
+    this.clearRematchPrompt();
+    this.gameState.inputLocked = true;
+    this.lockCombatInteractionsForResult();
+
+    const reasonTextMap = {
+      REMATCH_CANCELLED: 'REMATCH CANCELADO',
+      REMATCH_TIMEOUT: 'REMATCH SIN CONFIRMACION'
+    };
+    const subtitle = reasonTextMap[reason] || 'SALA CERRADA';
+    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
+    const title = this.add.text(683, 338, 'SALA CERRADA', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      fontStyle: 'bold',
+      color: '#ff3366',
+      letterSpacing: 3
+    }).setOrigin(0.5).setDepth(241);
+    const subtitleText = this.add.text(683, 380, subtitle, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: 'rgba(255,255,255,0.65)',
+      letterSpacing: 2
+    }).setOrigin(0.5).setDepth(241);
+
+    this.createResultButton(683, 446, 240, 48, 'VOLVER AL LOBBY', '#00f5ff', () => {
+      this.scene.start('LobbyScene');
+    });
+
+    this.resultGroup.add(overlay);
+    this.resultGroup.add(title);
+    this.resultGroup.add(subtitleText);
   }
 
   showOpponentDisconnectedOverlay() {
@@ -910,6 +1148,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.opponentDisconnectedShown = true;
+    this.clearRematchPrompt();
     this.gameState.inputLocked = true;
     this.lockCombatInteractionsForResult();
 
