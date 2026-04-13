@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-04-13 — push a `feature/fase3-client-lobby-socket`
+
+- feat(server): add multiplayer room backend
+- feat(remote): add lobby and socket flow
+
+
 ## [v0.3.0] — 2026-04-13 — Fase 3
 
 ### Agregado
