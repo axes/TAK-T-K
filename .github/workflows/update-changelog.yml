@@ -1,0 +1,76 @@
+name: Update Changelog
+
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    # Evita loop infinito: no ejecutar si el commit fue generado por este mismo workflow
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepend commits to CHANGELOG
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, datetime
+
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+          branch = os.environ["BRANCH"]
+          changelog = "tactical-neon/CHANGELOG.md"
+
+          with open(event_path) as f:
+              event = json.load(f)
+
+          commits = event.get("commits", [])
+          if not commits:
+              print("No hay commits nuevos, omitiendo.")
+              exit(0)
+
+          date = datetime.date.today().isoformat()
+
+          lines = [f"## {date} — push a `{branch}`\n\n"]
+          for c in commits:
+              # Solo la primera línea del mensaje (subject)
+              subject = c["message"].splitlines()[0].strip()
+              if subject:
+                  lines.append(f"- {subject}\n")
+          lines.append("\n")
+
+          entry = "".join(lines)
+
+          with open(changelog, "r", encoding="utf-8") as f:
+              content = f.read()
+
+          # Insertar después de la primera línea (el header # CHANGELOG)
+          first_newline = content.index("\n")
+          new_content = (
+              content[: first_newline + 1]
+              + "\n"
+              + entry
+              + content[first_newline + 1 :]
+          )
+
+          with open(changelog, "w", encoding="utf-8") as f:
+              f.write(new_content)
+
+          print(f"Changelog actualizado con {len(commits)} commit(s).")
+          PYEOF
+
+      - name: Commit y push del changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tactical-neon/CHANGELOG.md
+          git diff --cached --quiet && echo "Sin cambios que commitear." && exit 0
+          git commit -m "docs: actualizar changelog [skip ci]"
+          git push
