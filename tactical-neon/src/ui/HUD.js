@@ -325,6 +325,27 @@ export class HUD {
       this.endTurnBg.setFillStyle(Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0.08);
     });
 
+    this.surrenderText = scene.add.text(1206, 682, 'RENDIRSE', {
+      fontFamily: 'monospace',
+      fontSize: '9px',
+      color: 'rgba(255,255,255,0.35)',
+      letterSpacing: 1
+    }).setOrigin(0.5).setDepth(25).setInteractive({ useHandCursor: true });
+
+    this.surrenderUnderline = scene.add.rectangle(1206, 690, 70, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.25)').color, 1)
+      .setDepth(25)
+      .setVisible(false);
+
+    this.surrenderText.on('pointerover', () => {
+      this.surrenderText.setColor('#ff3366');
+      this.surrenderUnderline.setVisible(true);
+    });
+    this.surrenderText.on('pointerout', () => {
+      this.surrenderText.setColor('rgba(255,255,255,0.35)');
+      this.surrenderUnderline.setVisible(false);
+    });
+    this.surrenderText.on('pointerdown', () => this.onSurrender?.());
+
     this.endTurnConfirmYesBg.on('pointerover', () => {
       this.endTurnConfirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0.12);
     });
@@ -349,6 +370,69 @@ export class HUD {
       handler?.();
     });
 
+    this.surrenderConfirmContainer = scene.add.container(0, 0).setDepth(33).setVisible(false);
+    this.surrenderConfirmBg = scene.add.rectangle(1206, 584, 280, 88, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.55)').color, 1);
+    this.surrenderConfirmText = scene.add.text(1206, 564, '¿RENDIRSE Y DAR VICTORIA\nAL RIVAL?', {
+      fontFamily: 'monospace',
+      fontSize: '9px',
+      color: 'rgba(255,255,255,0.85)',
+      align: 'center',
+      lineSpacing: 4
+    }).setOrigin(0.5);
+    this.surrenderConfirmYesBg = scene.add.rectangle(1162, 606, 76, 24, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+      .setInteractive({ useHandCursor: true });
+    this.surrenderConfirmYesText = scene.add.text(1162, 606, 'SI', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      fontStyle: 'bold',
+      color: '#ff3366',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+    this.surrenderConfirmNoBg = scene.add.rectangle(1250, 606, 76, 24, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.35)').color, 1)
+      .setInteractive({ useHandCursor: true });
+    this.surrenderConfirmNoText = scene.add.text(1250, 606, 'NO', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      fontStyle: 'bold',
+      color: 'rgba(255,255,255,0.85)',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+    this.surrenderConfirmContainer.add([
+      this.surrenderConfirmBg,
+      this.surrenderConfirmText,
+      this.surrenderConfirmYesBg,
+      this.surrenderConfirmYesText,
+      this.surrenderConfirmNoBg,
+      this.surrenderConfirmNoText
+    ]);
+
+    this.surrenderConfirmYesBg.on('pointerover', () => {
+      this.surrenderConfirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.12);
+    });
+    this.surrenderConfirmYesBg.on('pointerout', () => {
+      this.surrenderConfirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0);
+    });
+    this.surrenderConfirmNoBg.on('pointerover', () => {
+      this.surrenderConfirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0.08);
+    });
+    this.surrenderConfirmNoBg.on('pointerout', () => {
+      this.surrenderConfirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0);
+    });
+
+    this.surrenderConfirmYesBg.on('pointerdown', () => {
+      const handler = this.onSurrenderConfirm;
+      this.hideSurrenderConfirmation();
+      handler?.();
+    });
+    this.surrenderConfirmNoBg.on('pointerdown', () => {
+      const handler = this.onSurrenderCancel;
+      this.hideSurrenderConfirmation();
+      handler?.();
+    });
+
     this.actionRows.move.onClick(() => this.onMove?.());
     this.actionRows.basic.onClick(() => this.onBasic?.());
     this.actionRows.special.onClick(() => this.onSpecial?.());
@@ -359,6 +443,7 @@ export class HUD {
     this.onBasic = handlers.onBasic;
     this.onSpecial = handlers.onSpecial;
     this.onEndTurn = handlers.onEndTurn;
+    this.onSurrender = handlers.onSurrender;
   }
 
   showEndTurnConfirmation(onConfirm, onCancel) {
@@ -371,6 +456,18 @@ export class HUD {
     this.onEndTurnConfirm = null;
     this.onEndTurnCancel = null;
     this.endTurnConfirmContainer.setVisible(false);
+  }
+
+  showSurrenderConfirmation(onConfirm, onCancel) {
+    this.onSurrenderConfirm = onConfirm;
+    this.onSurrenderCancel = onCancel;
+    this.surrenderConfirmContainer.setVisible(true);
+  }
+
+  hideSurrenderConfirmation() {
+    this.onSurrenderConfirm = null;
+    this.onSurrenderCancel = null;
+    this.surrenderConfirmContainer.setVisible(false);
   }
 
   update(state, selectedUnit, availability = null) {

@@ -35,6 +35,7 @@ export class BattleScene extends Phaser.Scene {
   create() {
     this.boardGroup = this.add.group();
     this.overlayGroup = this.add.group();
+    this.resultGroup = this.add.group();
     this.unitGroup = this.add.group();
     this.hud = new HUD(this);
     this.hoveredCell = null;
@@ -43,7 +44,8 @@ export class BattleScene extends Phaser.Scene {
       onMove: () => this.setAction('move'),
       onBasic: () => this.setAction('basic'),
       onSpecial: () => this.setAction('special'),
-      onEndTurn: () => this.tryEndTurnFromButton()
+      onEndTurn: () => this.tryEndTurnFromButton(),
+      onSurrender: () => this.trySurrenderFromButton()
     });
 
     this.titleText = this.add.text(24, 84, 'BATTLE MODE: HOT-SEAT', {
@@ -485,6 +487,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.hud.hideEndTurnConfirmation();
+    this.hud.hideSurrenderConfirmation();
     this.turnSystem.endTurn();
     this.addLog(`TURNO DE ${PLAYER_INFO[this.gameState.currentPlayer].name}`);
     this.refreshSelection();
@@ -507,6 +510,28 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.endTurn();
+  }
+
+  trySurrenderFromButton() {
+    if (this.gameState.inputLocked || this.gameState.winner) {
+      return;
+    }
+
+    this.hud.showSurrenderConfirmation(
+      () => this.confirmSurrender(),
+      () => {}
+    );
+  }
+
+  confirmSurrender() {
+    if (this.gameState.winner) {
+      return;
+    }
+
+    const surrenderPlayer = this.gameState.currentPlayer;
+    this.gameState.winner = surrenderPlayer === 1 ? 2 : 1;
+    this.addLog(`${PLAYER_INFO[surrenderPlayer].name} SE RINDE`);
+    this.showVictoryScreen();
   }
 
   updateBattleTitle() {
@@ -581,6 +606,8 @@ export class BattleScene extends Phaser.Scene {
     this.victoryShown = true;
     this.gameState.inputLocked = true;
     this.hud.hideEndTurnConfirmation();
+    this.hud.hideSurrenderConfirmation();
+    this.lockCombatInteractionsForResult();
 
     const winnerIsIA = this.gameState.mode === 'pve' && this.gameState.winner === 2;
     const winnerText = winnerIsIA ? 'IA VICTORIOSA' : `JUGADOR ${this.gameState.winner} VICTORIOSO`;
@@ -588,7 +615,7 @@ export class BattleScene extends Phaser.Scene {
     const aliveCount = this.gameState.units.filter((unit) => unit.isAlive()).length;
     const eliminated = this.gameState.units.length - aliveCount;
 
-    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.75).setDepth(200);
+    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(200);
     const title = this.add.text(683, 384, winnerText, {
       fontFamily: 'monospace',
       fontSize: '28px',
@@ -617,9 +644,28 @@ export class BattleScene extends Phaser.Scene {
       this.scene.start('MainScene');
     });
 
-    this.overlayGroup.add(overlay);
-    this.overlayGroup.add(title);
-    this.overlayGroup.add(subtitle);
+    this.resultGroup.add(overlay);
+    this.resultGroup.add(title);
+    this.resultGroup.add(subtitle);
+  }
+
+  lockCombatInteractionsForResult() {
+    this.hoveredCell = null;
+    this.overlayGroup.clear(true, true);
+
+    for (const tile of this.boardGroup.getChildren()) {
+      tile.disableInteractive?.();
+    }
+
+    this.hud.actionRows.move.background.disableInteractive?.();
+    this.hud.actionRows.basic.background.disableInteractive?.();
+    this.hud.actionRows.special.background.disableInteractive?.();
+    this.hud.endTurnBg.disableInteractive?.();
+    this.hud.endTurnConfirmYesBg.disableInteractive?.();
+    this.hud.endTurnConfirmNoBg.disableInteractive?.();
+    this.hud.surrenderText.disableInteractive?.();
+    this.hud.surrenderConfirmYesBg.disableInteractive?.();
+    this.hud.surrenderConfirmNoBg.disableInteractive?.();
   }
 
   createResultButton(x, y, width, height, label, color, onClick) {
@@ -647,7 +693,7 @@ export class BattleScene extends Phaser.Scene {
     });
     button.on('pointerdown', () => onClick());
 
-    this.overlayGroup.add(button);
-    this.overlayGroup.add(text);
+    this.resultGroup.add(button);
+    this.resultGroup.add(text);
   }
 }

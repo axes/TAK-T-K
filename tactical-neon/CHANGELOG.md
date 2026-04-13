@@ -1,8 +1,17 @@
 # CHANGELOG
 
-## 2026-04-13 — push a `main`
+## [v0.2.1] — 2026-04-13 — Ajustes cliente
 
-- test: validar autogeneracion de changelog
+### Agregado
+- Acción `RENDIRSE` en HUD con confirmación explícita antes de conceder la victoria al rival.
+
+### Modificado
+- `BattleScene` separa la capa de resultado (`resultGroup`) y bloquea interacciones del combate al mostrar pantalla de victoria.
+- Ajustes visuales del canvas para una presentación más estable: fondo plano en `index.html`, `integer zoom` en `main.js` y escala por `Phaser.Scale.NONE`.
+- `SetupScene` incorpora confirmación para salir al menú principal durante el despliegue.
+
+### Corregido
+- Se ocultan overlays de confirmación pendientes (`finalizar turno` y `rendirse`) al cerrar turno o al mostrar resultado final.
 
 
 ## [v0.2.0] — 2026-04-12 — Fase 2
