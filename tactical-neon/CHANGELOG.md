@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-04-13 — push a `main`
+
+- test: validar autogeneracion de changelog
+
+
 ## [v0.2.0] — 2026-04-12 — Fase 2
 
 ### Agregado
