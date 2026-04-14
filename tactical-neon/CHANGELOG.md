@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-04-14 — push a `main`
+
+- feat(server): add multiplayer room backend
+- feat(remote): add lobby and socket flow
+- docs: actualizar changelog [skip ci]
+- feat(multiplayer): add remote rematch handshake flow
+- docs(release): alinear version, fases y plan de staging
+- merge: unificar multiplayer y docs de release v0.3.1
+
+
 ## 2026-04-13 — push a `feature/fase3-client-lobby-socket`
 
 - feat(server): add multiplayer room backend
