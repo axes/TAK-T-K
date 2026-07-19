@@ -10,6 +10,18 @@ Este proyecto está siendo **vibecodeado**: iterado con ayuda de múltiples herr
 - tag sugerida para el corte estable: **v0.3.1**
 - plan de staging: [PLAN-STAGING.md](PLAN-STAGING.md)
 
+## Demo / Staging
+
+Ambiente de pruebas cerradas para la release **v0.3.1**.
+
+- Servidor Node.js + Socket.IO: [https://tak-t-k.onrender.com](https://tak-t-k.onrender.com)
+- Cliente Vite: [https://tak-t-k.vercel.app](https://tak-t-k.vercel.app)
+
+Notas de uso:
+
+- este entorno está destinado a pruebas cerradas y validación remota
+- el servidor puede tardar hasta 60 segundos en responder si estuvo inactivo, debido al cold start del plan gratuito de Render
+
 ## Qué es
 
 Una experiencia táctica hot-seat para dos jugadores en el mismo navegador, con:
