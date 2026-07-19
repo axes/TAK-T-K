@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-07-19 — push a `main`
+
+- feat(ui): consolidar layout desktop de batalla
+
+
 ## 2026-04-14 — push a `main`
 
 - feat(server): add multiplayer room backend
