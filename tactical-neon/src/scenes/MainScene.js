@@ -1,4 +1,6 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
+import { createDesktopTacticalLayout } from '../ui/layout.js';
+import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
 
 function colorToNumber(value) {
   return Phaser.Display.Color.HexStringToColor(value).color;
@@ -21,6 +23,7 @@ export class MainScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#0d0d0f');
+    this.layoutDebugOverlay = new LayoutDebugOverlay(this, createDesktopTacticalLayout());
 
     const title = this.add.text(683, 140, 'TAK-T-K', {
       fontFamily: 'monospace',

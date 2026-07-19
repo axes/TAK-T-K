@@ -7,13 +7,8 @@ import { CombatSystem } from '../systems/CombatSystem.js';
 import { AISystem } from '../systems/AISystem.js';
 import { UNIT_TEMPLATES } from '../config.js';
 import { Unit } from '../entities/Unit.js';
-
-function centerOfCell(x, y) {
-  return {
-    x: GAME_CONFIG.gridLeft + x * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2,
-    y: GAME_CONFIG.gridTop + y * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2
-  };
-}
+import { createDesktopTacticalLayout, centerOfCell } from '../ui/layout.js';
+import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
 
 export class BattleScene extends Phaser.Scene {
   constructor() {
@@ -56,6 +51,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create() {
+    this.layout = createDesktopTacticalLayout();
+    this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
     this.boardGroup = this.add.group();
     this.overlayGroup = this.add.group();
     this.resultGroup = this.add.group();
@@ -67,16 +64,16 @@ export class BattleScene extends Phaser.Scene {
       onMove: () => this.setAction('move'),
       onBasic: () => this.setAction('basic'),
       onSpecial: () => this.setAction('special'),
-      onEndTurn: () => this.tryEndTurnFromButton(),
-      onSurrender: () => this.trySurrenderFromButton()
+      onEndTurn: () => this.endTurn(),
+      onSurrender: () => this.confirmSurrender()
     });
 
-    this.titleText = this.add.text(24, 84, 'BATTLE MODE: HOT-SEAT', {
+    this.titleText = this.add.text(this.layout.header.x + this.layout.header.width - 16, this.layout.header.y + this.layout.header.height / 2, 'BATTLE MODE: HOT-SEAT', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: 'rgba(255,255,255,0.5)',
       letterSpacing: 2
-    }).setDepth(21);
+    }).setOrigin(1, 0.5).setDepth(21);
 
     this.statusText = this.add.text(24, 106, '', {
       fontFamily: 'monospace',
@@ -161,8 +158,8 @@ export class BattleScene extends Phaser.Scene {
       for (let x = 0; x < GAME_CONFIG.gridCols; x += 1) {
         const baseColor = (x + y) % 2 === 0 ? COLORS.cellA : COLORS.cellB;
         const cell = this.add.rectangle(
-          GAME_CONFIG.gridLeft + x * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2,
-          GAME_CONFIG.gridTop + y * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2,
+          this.layout.board.x + x * this.layout.cellSize + this.layout.cellSize / 2,
+          this.layout.board.y + y * this.layout.cellSize + this.layout.cellSize / 2,
           GAME_CONFIG.cellSize,
           GAME_CONFIG.cellSize,
           Phaser.Display.Color.HexStringToColor(baseColor).color,
@@ -418,7 +415,7 @@ export class BattleScene extends Phaser.Scene {
         continue;
       }
 
-      const { x, y } = centerOfCell(unit.position.x, unit.position.y);
+      const { x, y } = centerOfCell(this.layout, unit.position.x, unit.position.y);
       const color = PLAYER_INFO[unit.owner].color;
       const fillAlpha = 0.15;
       const circle = this.add.circle(x, y, 18, Phaser.Display.Color.HexStringToColor(color).color, fillAlpha)
@@ -496,8 +493,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   addOverlay(x, y, color, alpha, outlineOnly) {
-    const px = GAME_CONFIG.gridLeft + x * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2;
-    const py = GAME_CONFIG.gridTop + y * GAME_CONFIG.cellSize + GAME_CONFIG.cellSize / 2;
+    const { x: px, y: py } = centerOfCell(this.layout, x, y);
     const rect = this.add.rectangle(px, py, GAME_CONFIG.cellSize, GAME_CONFIG.cellSize, Phaser.Display.Color.HexStringToColor(color).color, alpha)
       .setStrokeStyle(outlineOnly ? 2 : 1.5, Phaser.Display.Color.HexStringToColor(color).color, 1);
     if (!outlineOnly) {
@@ -706,9 +702,11 @@ export class BattleScene extends Phaser.Scene {
     const winnerColor = numericWinner === 1 ? '#00f5ff' : '#ff00e5';
     const aliveCount = this.gameState.units.filter((unit) => unit.isAlive()).length;
     const eliminated = this.gameState.units.length - aliveCount;
+    const centerX = this.layout.viewport.x + this.layout.viewport.width / 2;
+    const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
 
-    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(200);
-    const title = this.add.text(683, 384, winnerText, {
+    const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(200);
+    const title = this.add.text(centerX, centerY, winnerText, {
       fontFamily: 'monospace',
       fontSize: '28px',
       fontStyle: 'bold',
@@ -716,7 +714,7 @@ export class BattleScene extends Phaser.Scene {
       letterSpacing: 4
     }).setOrigin(0.5).setDepth(201).setAlpha(0);
 
-    const subtitle = this.add.text(683, 434, `TURNO ${this.gameState.turnNumber} · UNIDADES ELIMINADAS: ${eliminated}`, {
+    const subtitle = this.add.text(centerX, centerY + 50, `TURNO ${this.gameState.turnNumber} · UNIDADES ELIMINADAS: ${eliminated}`, {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: 'rgba(255,255,255,0.4)'
@@ -728,7 +726,7 @@ export class BattleScene extends Phaser.Scene {
       duration: 600
     });
 
-    this.createResultButton(571, 504, 200, 48, 'JUGAR DE NUEVO', '#00f5ff', () => {
+    this.createResultButton(centerX - 112, centerY + 120, 200, 48, 'JUGAR DE NUEVO', '#00f5ff', () => {
       if (this.isRemote) {
         this.socketManager?.emit('game:rematch_response', {
           playerId: this.playerId,
@@ -740,7 +738,7 @@ export class BattleScene extends Phaser.Scene {
       this.scene.start('SetupScene', { mode: this.gameState.mode });
     });
 
-    this.createResultButton(795, 504, 200, 48, 'MENÚ PRINCIPAL', '#ff00e5', () => {
+    this.createResultButton(centerX + 112, centerY + 120, 200, 48, 'MENÚ PRINCIPAL', '#ff00e5', () => {
       this.socketManager?.disconnect?.();
       this.scene.start('MainScene');
     });
@@ -762,11 +760,7 @@ export class BattleScene extends Phaser.Scene {
     this.hud.actionRows.basic.background.disableInteractive?.();
     this.hud.actionRows.special.background.disableInteractive?.();
     this.hud.endTurnBg.disableInteractive?.();
-    this.hud.endTurnConfirmYesBg.disableInteractive?.();
-    this.hud.endTurnConfirmNoBg.disableInteractive?.();
     this.hud.surrenderText.disableInteractive?.();
-    this.hud.surrenderConfirmYesBg.disableInteractive?.();
-    this.hud.surrenderConfirmNoBg.disableInteractive?.();
   }
 
   createResultButton(x, y, width, height, label, color, onClick) {
@@ -804,42 +798,44 @@ export class BattleScene extends Phaser.Scene {
     }
 
     if (!this.rematchPromptElements) {
-      const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.7).setDepth(250);
-      const panel = this.add.rectangle(683, 386, 520, 248, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
+      const centerX = this.layout.viewport.x + this.layout.viewport.width / 2;
+      const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
+      const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.7).setDepth(250);
+      const panel = this.add.rectangle(centerX, centerY + 2, 520, 248, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
         .setDepth(251)
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.45)').color, 1);
-      const title = this.add.text(683, 316, 'REMATCH', {
+      const title = this.add.text(centerX, centerY - 68, 'REMATCH', {
         fontFamily: 'monospace',
         fontSize: '24px',
         fontStyle: 'bold',
         color: '#00f5ff',
         letterSpacing: 3
       }).setOrigin(0.5).setDepth(252);
-      const subtitle = this.add.text(683, 360, 'CONFIRMA EN AMBOS CLIENTES', {
+      const subtitle = this.add.text(centerX, centerY - 24, 'CONFIRMA EN AMBOS CLIENTES', {
         fontFamily: 'monospace',
         fontSize: '11px',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(252);
-      const status = this.add.text(683, 398, '', {
+      const status = this.add.text(centerX, centerY + 14, '', {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#ffffff',
         align: 'center',
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(252);
-      const timer = this.add.text(683, 432, '', {
+      const timer = this.add.text(centerX, centerY + 48, '', {
         fontFamily: 'monospace',
         fontSize: '11px',
         color: 'rgba(255,255,255,0.65)',
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(252);
 
-      const yesButton = this.add.rectangle(623, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      const yesButton = this.add.rectangle(centerX - 60, centerY + 100, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
         .setDepth(252)
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.9)
         .setInteractive({ useHandCursor: true });
-      const yesText = this.add.text(623, 484, 'CONFIRMAR', {
+      const yesText = this.add.text(centerX - 60, centerY + 100, 'CONFIRMAR', {
         fontFamily: 'monospace',
         fontSize: '11px',
         fontStyle: 'bold',
@@ -847,11 +843,11 @@ export class BattleScene extends Phaser.Scene {
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(253);
 
-      const noButton = this.add.rectangle(743, 484, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+      const noButton = this.add.rectangle(centerX + 60, centerY + 100, 150, 42, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
         .setDepth(252)
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
         .setInteractive({ useHandCursor: true });
-      const noText = this.add.text(743, 484, 'CANCELAR', {
+      const noText = this.add.text(centerX + 60, centerY + 100, 'CANCELAR', {
         fontFamily: 'monospace',
         fontSize: '11px',
         fontStyle: 'bold',
@@ -1118,22 +1114,24 @@ export class BattleScene extends Phaser.Scene {
       REMATCH_TIMEOUT: 'REMATCH SIN CONFIRMACION'
     };
     const subtitle = reasonTextMap[reason] || 'SALA CERRADA';
-    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
-    const title = this.add.text(683, 338, 'SALA CERRADA', {
+    const centerX = this.layout.viewport.x + this.layout.viewport.width / 2;
+    const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
+    const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
+    const title = this.add.text(centerX, centerY - 46, 'SALA CERRADA', {
       fontFamily: 'monospace',
       fontSize: '28px',
       fontStyle: 'bold',
       color: '#ff3366',
       letterSpacing: 3
     }).setOrigin(0.5).setDepth(241);
-    const subtitleText = this.add.text(683, 380, subtitle, {
+    const subtitleText = this.add.text(centerX, centerY - 4, subtitle, {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: 'rgba(255,255,255,0.65)',
       letterSpacing: 2
     }).setOrigin(0.5).setDepth(241);
 
-    this.createResultButton(683, 446, 240, 48, 'VOLVER AL LOBBY', '#00f5ff', () => {
+    this.createResultButton(centerX, centerY + 62, 240, 48, 'VOLVER AL LOBBY', '#00f5ff', () => {
       this.scene.start('LobbyScene');
     });
 
@@ -1152,8 +1150,10 @@ export class BattleScene extends Phaser.Scene {
     this.gameState.inputLocked = true;
     this.lockCombatInteractionsForResult();
 
-    const overlay = this.add.rectangle(683, 384, 1366, 768, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
-    const title = this.add.text(683, 338, 'OPONENTE DESCONECTADO', {
+    const centerX = this.layout.viewport.x + this.layout.viewport.width / 2;
+    const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
+    const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
+    const title = this.add.text(centerX, centerY - 46, 'OPONENTE DESCONECTADO', {
       fontFamily: 'monospace',
       fontSize: '28px',
       fontStyle: 'bold',
@@ -1161,7 +1161,7 @@ export class BattleScene extends Phaser.Scene {
       letterSpacing: 3
     }).setOrigin(0.5).setDepth(241);
 
-    this.createResultButton(683, 430, 240, 48, 'VOLVER AL MENÚ', '#00f5ff', () => {
+    this.createResultButton(centerX, centerY + 46, 240, 48, 'VOLVER AL MENÚ', '#00f5ff', () => {
       this.socketManager?.disconnect?.();
       this.scene.start('MainScene');
     });

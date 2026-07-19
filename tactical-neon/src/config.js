@@ -1,15 +1,18 @@
 export const GAME_CONFIG = {
-  width: 1366,
-  height: 768,
+  width: 1280,
+  height: 720,
   backgroundColor: '#0d0d0f',
   parent: 'app',
-  cellSize: 64,
+  cellSize: 80,
   gridCols: 8,
   gridRows: 8,
-  gridWidth: 512,
-  gridHeight: 512,
-  gridLeft: 267,
-  gridTop: 128
+  gridWidth: 640,
+  gridHeight: 640,
+
+  // Compatibilidad temporal para SetupScene y BattleScene durante la migración
+  // de las etapas siguientes. Los nuevos consumidores deben usar layout.js.
+  gridLeft: 158,
+  gridTop: 72
 };
 
 export const COLORS = {
@@ -72,12 +75,13 @@ export const SETUP_ROWS = {
 
 export const UNIT_ORDER = ['VANGUARD', 'SNIPER', 'MYSTIC'];
 
-export const HUD_LAYOUT = {
-  topY: 24,
-  leftX: 24,
-  rightX: 680,
-  bottomPanelY: 816
+export const TOUCH_TARGETS = {
+  primary: { width: 80, height: 80 },
+  secondary: { width: 80, height: 72 },
+  compact: { width: 64, height: 48 }
 };
+
+export const DEBUG_LAYOUT = false;
 
 const viteServerUrl = typeof import.meta !== 'undefined' && import.meta.env
   ? import.meta.env.VITE_SERVER_URL
