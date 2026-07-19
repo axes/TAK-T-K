@@ -2,6 +2,12 @@
 
 ## 2026-07-19 — push a `main`
 
+- chore(dev): formalizar entorno local del proyecto
+- docs: actualizar entorno y pendientes de desarrollo
+
+
+## 2026-07-19 — push a `main`
+
 - feat(ui): consolidar layout desktop de batalla
 
 
