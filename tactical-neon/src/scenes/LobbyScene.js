@@ -19,6 +19,7 @@ export class LobbyScene extends Phaser.Scene {
     this.nickname = '';
     this.opponentNickname = '';
     this.errorMessage = '';
+    this.canvasCenterX = GAME_CONFIG.width / 2;
     this.domNodes = [];
     this.domLayoutEntries = [];
     this.socketManager = SocketManager.getInstance();
@@ -34,7 +35,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   createBaseUI() {
-    this.titleText = this.add.text(683, 140, '', {
+    this.titleText = this.add.text(this.canvasCenterX, 140, '', {
       fontFamily: 'monospace',
       fontSize: '42px',
       fontStyle: 'bold',
@@ -43,7 +44,7 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 4
     }).setOrigin(0.5);
 
-    this.subtitleText = this.add.text(683, 180, '', {
+    this.subtitleText = this.add.text(this.canvasCenterX, 180, '', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: 'rgba(255,255,255,0.45)',
@@ -51,7 +52,7 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 2
     }).setOrigin(0.5);
 
-    this.infoText = this.add.text(683, 240, '', {
+    this.infoText = this.add.text(this.canvasCenterX, 240, '', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#ffffff',
@@ -59,7 +60,7 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 2
     }).setOrigin(0.5);
 
-    this.secondaryInfoText = this.add.text(683, 290, '', {
+    this.secondaryInfoText = this.add.text(this.canvasCenterX, 290, '', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: 'rgba(255,255,255,0.65)',
@@ -67,7 +68,7 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 1
     }).setOrigin(0.5);
 
-    this.errorText = this.add.text(683, 360, '', {
+    this.errorText = this.add.text(this.canvasCenterX, 360, '', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: 'rgba(255,51,102,0.8)',
@@ -75,19 +76,19 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 1
     }).setOrigin(0.5);
 
-    this.progressBg = this.add.rectangle(683, 380, 260, 10, colorToNumber('rgba(255,255,255,0.12)'), 1).setVisible(false);
-    this.progressFill = this.add.rectangle(553, 380, 0, 10, colorToNumber('rgba(57,255,20,0.85)'), 1)
+    this.progressBg = this.add.rectangle(this.canvasCenterX, 380, 260, 10, colorToNumber('rgba(255,255,255,0.12)'), 1).setVisible(false);
+    this.progressFill = this.add.rectangle(this.canvasCenterX - 130, 380, 0, 10, colorToNumber('rgba(57,255,20,0.85)'), 1)
       .setOrigin(0, 0.5)
       .setVisible(false);
 
-    this.waitingText = this.add.text(683, 420, '', {
+    this.waitingText = this.add.text(this.canvasCenterX, 420, '', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: 'rgba(0,245,255,0.5)',
       letterSpacing: 2
     }).setOrigin(0.5);
 
-    this.codeText = this.add.text(683, 280, '', {
+    this.codeText = this.add.text(this.canvasCenterX, 280, '', {
       fontFamily: 'monospace',
       fontSize: '64px',
       fontStyle: 'bold',
@@ -95,7 +96,7 @@ export class LobbyScene extends Phaser.Scene {
       letterSpacing: 6
     }).setOrigin(0.5);
 
-    this.backButton = this.createButton(74, 708, 118, 36, '← VOLVER', 'rgba(255,255,255,0.45)', () => {
+    this.backButton = this.createButton(80, GAME_CONFIG.height - 40, 118, 36, '← VOLVER', 'rgba(255,255,255,0.45)', () => {
       this.socketManager.disconnect();
       this.scene.start('MainScene');
     });
@@ -252,7 +253,7 @@ export class LobbyScene extends Phaser.Scene {
       this.titleText.setText('MODO REMOTO');
       this.subtitleText.setText('SIN REGISTRO. SOLO UN NOMBRE.');
       this.nicknameInput = this.createDomInput({
-        x: 683,
+        x: this.canvasCenterX,
         y: 240,
         width: 280,
         maxLength: 12,
@@ -260,8 +261,8 @@ export class LobbyScene extends Phaser.Scene {
       });
 
       this.stateButtons.push(
-        this.createButton(617, 300, 170, 40, 'CREAR SALA', '#00f5ff', () => this.handleCreateRoom()),
-        this.createButton(789, 300, 170, 40, 'UNIRSE', '#ff00e5', () => this.showJoinState())
+        this.createButton(this.canvasCenterX - 86, 300, 170, 40, 'CREAR SALA', '#00f5ff', () => this.handleCreateRoom()),
+        this.createButton(this.canvasCenterX + 86, 300, 170, 40, 'UNIRSE', '#ff00e5', () => this.showJoinState())
       );
       return;
     }
@@ -288,7 +289,7 @@ export class LobbyScene extends Phaser.Scene {
         repeat: -1
       });
       this.stateButtons.push(
-        this.createButton(683, 500, 180, 42, 'CANCELAR', 'rgba(255,51,102,0.9)', () => {
+        this.createButton(this.canvasCenterX, 500, 180, 42, 'CANCELAR', 'rgba(255,51,102,0.9)', () => {
           this.socketManager.disconnect();
           this.socketManager.connect(SERVER_URL);
           this.state = 'entry';
@@ -303,7 +304,7 @@ export class LobbyScene extends Phaser.Scene {
       this.titleText.setText('INGRESAR CODIGO DE SALA');
       this.subtitleText.setText('');
       this.codeInput = this.createDomInput({
-        x: 683,
+        x: this.canvasCenterX,
         y: 270,
         width: 200,
         maxLength: 6,
@@ -311,8 +312,8 @@ export class LobbyScene extends Phaser.Scene {
       });
 
       this.stateButtons.push(
-        this.createButton(683, 330, 170, 40, 'CONFIRMAR', '#00f5ff', () => this.handleJoinRoom()),
-        this.createTextLink(683, 380, 'VOLVER', () => {
+        this.createButton(this.canvasCenterX, 330, 170, 40, 'CONFIRMAR', '#00f5ff', () => this.handleJoinRoom()),
+        this.createTextLink(this.canvasCenterX, 380, 'VOLVER', () => {
           this.state = 'entry';
           this.errorMessage = '';
           this.renderState();

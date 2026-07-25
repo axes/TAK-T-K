@@ -1,6 +1,7 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { createDesktopTacticalLayout } from '../ui/layout.js';
+import { createDesktopTacticalLayout, createDesktopChrome } from '../ui/layout.js';
 import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
+import { GAME_CONFIG, COLORS } from '../config.js';
 
 function colorToNumber(value) {
   return Phaser.Display.Color.HexStringToColor(value).color;
@@ -23,26 +24,36 @@ export class MainScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#0d0d0f');
-    this.layoutDebugOverlay = new LayoutDebugOverlay(this, createDesktopTacticalLayout());
+    this.layout = createDesktopTacticalLayout();
+    this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
+    createDesktopChrome(this, this.layout, { drawLeftPanel: false, drawRightPanel: false, showLeftContent: false });
+    const centerX = this.layout.boardArea.x + this.layout.boardArea.width / 2;
 
-    const title = this.add.text(683, 140, 'TAK-T-K', {
+    this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'TAK-T-K', {
+      fontFamily: 'monospace', fontSize: '16px', fontStyle: 'bold', color: COLORS.text, letterSpacing: 2
+    }).setOrigin(0, 0.5).setDepth(12);
+    this.add.text(this.layout.headerCenter.x + this.layout.headerCenter.width / 2, this.layout.headerCenter.y + 36, 'MUEVE · ATACA · DOMINA', {
+      fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.45)', letterSpacing: 2
+    }).setOrigin(0.5).setDepth(12);
+
+    const title = this.add.text(centerX, 150, 'MUEVE. ATACA. DOMINA.', {
       fontFamily: 'monospace',
-      fontSize: '72px',
+      fontSize: '24px',
       fontStyle: 'bold',
       color: '#00f5ff',
       align: 'center',
-      letterSpacing: 10
+      letterSpacing: 4
     }).setOrigin(0.5).setAlpha(0);
 
-    const slogan = this.add.text(683, 210, 'MUEVE. ATACA. DOMINA.', {
+    const slogan = this.add.text(centerX, 198, 'UN JUEGO TÁCTICO POR TURNOS', {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: '12px',
       color: 'rgba(255, 255, 255, 0.5)',
       align: 'center',
       letterSpacing: 4
     }).setOrigin(0.5).setAlpha(0);
 
-    const description = this.add.text(683, 265, 'UN JUEGO TÁCTICO POR TURNOS.\nDECISIONES PRECISAS. SIN MARGEN DE ERROR.', {
+    const description = this.add.text(centerX, 238, 'DECISIONES PRECISAS. SIN MARGEN DE ERROR.', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: 'rgba(255, 255, 255, 0.25)',
@@ -51,9 +62,9 @@ export class MainScene extends Phaser.Scene {
       lineSpacing: 8
     }).setOrigin(0.5).setAlpha(0);
 
-    const separator = this.add.rectangle(683, 300, 400, 1, colorToNumber('rgba(0, 245, 255, 0.2)'), 1).setAlpha(0);
+    const separator = this.add.rectangle(centerX, 270, 360, 1, colorToNumber('rgba(0, 245, 255, 0.2)'), 1).setAlpha(0);
 
-    const modeLabel = this.add.text(683, 330, 'SELECCIONAR MODO', {
+    const modeLabel = this.add.text(centerX, 294, 'SELECCIONAR MODO', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: 'rgba(255,255,255,0.3)',
@@ -63,8 +74,8 @@ export class MainScene extends Phaser.Scene {
 
     const cards = [
       this.createModeCard({
-        x: 371,
-        y: 356,
+        x: centerX - 324,
+        y: 320,
         title: 'HOTSEAT',
         subtitle: 'DOS JUGADORES\nEN ESTA PANTALLA',
         normalBorder: 'rgba(0,245,255,0.3)',
@@ -74,8 +85,8 @@ export class MainScene extends Phaser.Scene {
         onClick: () => this.scene.start('SetupScene', { mode: 'pvp' })
       }),
       this.createModeCard({
-        x: 595,
-        y: 356,
+        x: centerX - 100,
+        y: 320,
         title: 'VS IA',
         subtitle: 'JUEGA CONTRA\nEL SISTEMA',
         normalBorder: 'rgba(255,0,229,0.3)',
@@ -85,8 +96,8 @@ export class MainScene extends Phaser.Scene {
         onClick: () => this.scene.start('SetupScene', { mode: 'pve' })
       }),
       this.createModeCard({
-        x: 819,
-        y: 356,
+        x: centerX + 124,
+        y: 320,
         title: 'REMOTO',
         subtitle: 'SALAS PRIVADAS\nPOR CODIGO',
         normalBorder: 'rgba(255,170,0,0.35)',
@@ -107,7 +118,7 @@ export class MainScene extends Phaser.Scene {
       button.text.setAlpha(0);
     }
 
-    const versionText = this.add.text(1346, 748, 'v0.3.1 — FASE 3', {
+    const versionText = this.add.text(this.layout.boardArea.x + this.layout.boardArea.width - 18, 520, 'v0.3.1 — FASE 3', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: 'rgba(255,255,255,0.15)'
@@ -223,7 +234,7 @@ export class MainScene extends Phaser.Scene {
 
     const gap = 40;
     const totalWidth = widths.reduce((acc, value) => acc + value, 0) + gap * (labels.length - 1);
-    let currentX = 683 - totalWidth / 2;
+    let currentX = GAME_CONFIG.width / 2 - totalWidth / 2;
     const buttons = [];
 
     for (let i = 0; i < labels.length; i += 1) {

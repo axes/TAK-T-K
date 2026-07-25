@@ -2,7 +2,7 @@ import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.
 import { COLORS, GAME_CONFIG, PLAYER_INFO, SETUP_ROWS, UNIT_ORDER } from '../config.js';
 import { createGameState } from '../gameState.js';
 import { createUnitGlyph } from '../ui/unitGlyph.js';
-import { createDesktopTacticalLayout, centerOfCell } from '../ui/layout.js';
+import { createDesktopTacticalLayout, centerOfCell, createDesktopChrome, createDesktopPanel } from '../ui/layout.js';
 import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
 
 export class SetupScene extends Phaser.Scene {
@@ -38,29 +38,44 @@ export class SetupScene extends Phaser.Scene {
   create() {
     this.layout = createDesktopTacticalLayout();
     this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
+    this.desktopChrome = createDesktopChrome(this, this.layout, {
+      leftTitle: 'PREPARACIÓN',
+      leftLines: ['Coloca tus unidades.', '', '• Selecciona una unidad disponible.', '', '• Haz clic en una celda válida.', '', '• Confirma el despliegue cuando corresponda.'],
+      drawRightPanel: false
+    });
+    createDesktopPanel(this, this.layout.rightSidebar, { borderColor: 0xff00e5, fillColor: 0x111118, alpha: 0.92 });
     this.boardGroup = this.add.group();
     this.unitGroup = this.add.group();
 
-    this.titleText = this.add.text(24, 16, 'SETUP DE PARTIDA', {
+    this.titleText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'PREPARACIÓN', {
       fontFamily: 'monospace',
-      fontSize: '20px',
-      color: COLORS.text,
-      letterSpacing: 4
-    });
-
-    this.statusText = this.add.text(24, 44, '', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: COLORS.text,
-      letterSpacing: 3
-    });
-
-    this.hintText = this.add.text(24, 70, 'CLICK EN UNA CELDA VALIDA PARA COLOCAR LA UNIDAD ACTIVA', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
+      fontSize: '15px',
       color: COLORS.text,
       letterSpacing: 2
-    });
+    }).setOrigin(0, 0.5);
+
+    this.statusText = this.add.text(this.layout.headerCenter.x + 18, this.layout.headerCenter.y + 25, '', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: COLORS.text,
+      letterSpacing: 1
+    }).setOrigin(0, 0.5);
+
+    this.hintText = this.add.text(this.layout.headerCenter.x + 18, this.layout.headerCenter.y + 51, 'CLICK EN UNA CELDA VALIDA PARA COLOCAR LA UNIDAD ACTIVA', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: 'rgba(255,255,255,0.62)',
+      letterSpacing: 1
+    }).setOrigin(0, 0.5);
+
+    const rightContent = this.layout.rightSidebar.content;
+    this.setupPanelTitle = this.add.text(rightContent.x, rightContent.y, 'ESTADO DE DESPLIEGUE', {
+      fontFamily: 'monospace', fontSize: '11px', fontStyle: 'bold', color: '#ff00e5', letterSpacing: 1
+    }).setDepth(30);
+    this.setupProgressText = this.add.text(rightContent.x, rightContent.y + 38, '', {
+      fontFamily: 'monospace', fontSize: '11px', color: 'rgba(255,255,255,0.72)', lineSpacing: 8,
+      wordWrap: { width: rightContent.width }
+    }).setDepth(30);
 
     this.drawBoard();
     this.createExitControls();
@@ -76,7 +91,7 @@ export class SetupScene extends Phaser.Scene {
   }
 
   createExitControls() {
-    const headerRight = this.layout.header.x + this.layout.header.width - this.layout.spacing.outerPadding;
+    const headerRight = this.layout.headerRight.x + this.layout.headerRight.width - this.layout.spacing.sidebarPadding;
     this.exitLink = this.add.text(headerRight, this.layout.header.y + this.layout.header.height / 2, 'TERMINAR PARTIDA', {
       fontFamily: 'monospace',
       fontSize: '10px',
@@ -310,8 +325,10 @@ export class SetupScene extends Phaser.Scene {
     if (this.isRemote) {
       const localName = this.playerId === 'p2' ? 'JUGADOR 2' : 'JUGADOR 1';
       this.statusText.setText(`DESPLIEGUE REMOTO: ${localName} | UNIDAD ACTIVA: ${templateKey}`);
+      this.setupProgressText.setText(`JUGADOR LOCAL: ${localName}\nUNIDAD ACTIVA: ${templateKey}\n\nCOLOCADAS: ${this.unitToPlaceIndexByPlayer[owner]}/${UNIT_ORDER.length}`);
     } else {
       this.statusText.setText(`TURNO DE CONFIGURACION: ${PLAYER_INFO[owner].name} | UNIDAD ACTIVA: ${templateKey}`);
+      this.setupProgressText.setText(`JUGADOR ACTIVO: ${PLAYER_INFO[owner].name}\nUNIDAD ACTIVA: ${templateKey}\n\nCOLOCADAS: ${this.unitToPlaceIndexByPlayer[owner]}/${UNIT_ORDER.length}`);
     }
     this.refreshUnitMarkers();
   }
@@ -336,8 +353,9 @@ export class SetupScene extends Phaser.Scene {
   }
 
   createRemoteControls() {
-    const sidebarCenterX = this.layout.sidebar.x + this.layout.sidebar.width / 2;
-    const sidebarBottomY = this.layout.sidebar.y + this.layout.sidebar.height - 40;
+    const { controls } = this.layout.rightSidebar;
+    const sidebarCenterX = controls.x + controls.width / 2;
+    const sidebarBottomY = controls.y + 38;
     this.remoteConfirmBg = this.add.rectangle(sidebarCenterX, sidebarBottomY, 180, 40, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0.45)
       .setInteractive({ useHandCursor: true })

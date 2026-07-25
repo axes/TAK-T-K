@@ -1,7 +1,8 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
+import { GAME_CONFIG } from '../config.js';
 
 function createBackButton(scene) {
-  const back = scene.add.text(60, 708, '← VOLVER', {
+  const back = scene.add.text(60, GAME_CONFIG.height - 40, '← VOLVER', {
     fontFamily: 'monospace',
     fontSize: '10px',
     color: 'rgba(255,255,255,0.3)',
@@ -21,14 +22,15 @@ export class StoryScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#0d0d0f');
 
-    this.add.text(683, 120, 'HISTORIA', {
+    const centerX = GAME_CONFIG.width / 2;
+    this.add.text(centerX, 120, 'HISTORIA', {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: 'rgba(255, 255, 255, 0.5)',
       letterSpacing: 4
     }).setOrigin(0.5);
 
-    this.add.text(683, 200, 'CONTENIDO PRÓXIMAMENTE', {
+    this.add.text(centerX, 200, 'CONTENIDO PRÓXIMAMENTE', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: 'rgba(255,255,255,0.25)',

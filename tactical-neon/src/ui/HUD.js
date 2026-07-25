@@ -115,35 +115,34 @@ export class HUD {
     this.scene = scene;
 
     this.layout = scene.layout || createDesktopTacticalLayout();
-    const { header, sidebar, spacing } = this.layout;
-    const { content: sidebarContent, unitInfo, actions, description, endTurn, surrenderButton } = sidebar;
-    const headerCenterX = header.x + header.width / 2;
-    const headerCenterY = header.y + header.height / 2;
-    const sidebarLeft = sidebarContent.x;
-    const sidebarRight = sidebarContent.x + sidebarContent.width;
-    const sidebarWidth = sidebarContent.width;
-    const sidebarCenterX = sidebar.x + sidebar.width / 2;
-    const sidebarCenterY = sidebar.y + sidebar.height / 2;
-    const sidebarSeparatorX = sidebar.x - spacing.contentGap / 2;
+    const { header, rightSidebar, spacing } = this.layout;
+    const { content: sidebarContent, unitInfo, actions, description, controls, endTurn, surrenderButton } = rightSidebar;
+    const headerCenterRegion = this.layout.headerCenter || header;
+    const headerCenterX = headerCenterRegion.x + headerCenterRegion.width / 2;
+    const headerCenterY = headerCenterRegion.y + headerCenterRegion.height / 2;
+    const sidebarCenterX = unitInfo.x + unitInfo.width / 2;
+    const unitInfoCenterY = unitInfo.y + unitInfo.height / 2;
+    const sidebarCenterY = rightSidebar.y + rightSidebar.height / 2;
+    const sidebarSeparatorX = rightSidebar.x - spacing.contentGap / 2;
 
     this.headerBackground = scene.add.rectangle(headerCenterX, headerCenterY, header.width, header.height, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 1).setDepth(20);
     this.headerBorderBottom = scene.add.rectangle(headerCenterX, header.y + header.height, header.width, 1, Phaser.Display.Color.HexStringToColor('rgba(0, 245, 255, 0.3)').color, 1).setDepth(21);
 
-    this.panelBackground = scene.add.rectangle(sidebarCenterX, sidebarCenterY, sidebar.width, sidebar.height, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.03)').color, 1).setDepth(20);
-    this.verticalSeparator = scene.add.rectangle(sidebarSeparatorX, sidebarCenterY, 1, sidebar.height, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.3)').color, 1).setDepth(21);
+    this.panelBackground = scene.add.rectangle(rightSidebar.x + rightSidebar.width / 2, sidebarCenterY, rightSidebar.width, rightSidebar.height, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.03)').color, 1).setDepth(20);
+    this.verticalSeparator = scene.add.rectangle(sidebarSeparatorX, sidebarCenterY, 1, rightSidebar.height, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.3)').color, 1).setDepth(21);
 
-    this.turnText = scene.add.text(header.x + 22, headerCenterY, '', {
+    this.turnText = scene.add.text(headerCenterRegion.x + 120, headerCenterY, '', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: COLORS.player1,
       fontStyle: 'bold',
       letterSpacing: 1
-    }).setOrigin(0, 0.5).setDepth(22);
+    }).setOrigin(0.5, 0.5).setDepth(22);
 
-    this.headerSep1 = scene.add.rectangle(header.x + 182, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
+    this.headerSep1 = scene.add.rectangle(headerCenterRegion.x + 240, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
 
-    this.playerDot = scene.add.circle(header.x + 246, headerCenterY, 4, Phaser.Display.Color.HexStringToColor(COLORS.player1).color, 1).setDepth(22);
-    this.playerText = scene.add.text(header.x + 262, headerCenterY, '', {
+    this.playerDot = scene.add.circle(headerCenterRegion.x + 350, headerCenterY, 4, Phaser.Display.Color.HexStringToColor(COLORS.player1).color, 1).setDepth(22);
+    this.playerText = scene.add.text(headerCenterRegion.x + 368, headerCenterY, '', {
       fontFamily: 'monospace',
       fontSize: '13px',
       fontStyle: 'bold',
@@ -151,15 +150,15 @@ export class HUD {
       letterSpacing: 1
     }).setOrigin(0, 0.5).setDepth(22);
 
-    this.headerSep2 = scene.add.rectangle(header.x + 462, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
-    this.unitsAliveText = scene.add.text(header.x + 542, headerCenterY, '', {
+    this.headerSep2 = scene.add.rectangle(headerCenterRegion.x + 500, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
+    this.unitsAliveText = scene.add.text(headerCenterRegion.x + 600, headerCenterY, '', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: 'rgba(255,255,255,0.5)',
       letterSpacing: 1
-    }).setOrigin(0, 0.5).setDepth(22);
+    }).setOrigin(0.5, 0.5).setDepth(22);
 
-    this.emptyPromptText = scene.add.text(sidebarCenterX, sidebarCenterY, 'SELECCIONA\nUNA UNIDAD', {
+    this.emptyPromptText = scene.add.text(sidebarCenterX, unitInfoCenterY + 8, 'SELECCIONA\nUNA UNIDAD', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: 'rgba(255,255,255,0.2)',
@@ -191,8 +190,9 @@ export class HUD {
       letterSpacing: 1
     }).setDepth(23);
 
-    this.hpBarBack = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, 220, 6, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.1)').color, 1).setOrigin(0, 0.5).setDepth(23);
-    this.hpBarFill = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, 220, 6, Phaser.Display.Color.HexStringToColor('#39ff14').color, 1).setOrigin(0, 0.5).setDepth(24);
+    const hpBarWidth = unitInfo.width - 50;
+    this.hpBarBack = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, hpBarWidth, 6, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.1)').color, 1).setOrigin(0, 0.5).setDepth(23);
+    this.hpBarFill = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, hpBarWidth, 6, Phaser.Display.Color.HexStringToColor('#39ff14').color, 1).setOrigin(0, 0.5).setDepth(24);
     this.hpValueText = scene.add.text(unitInfo.x + unitInfo.width, unitInfo.y + 68, '', {
       fontFamily: 'monospace',
       fontSize: '10px',
@@ -230,9 +230,9 @@ export class HUD {
     }).setDepth(23);
 
     this.actionRows = {
-      move: createActionRow(scene, actions.x, actions.y + 20, actions.width, 40),
-      basic: createActionRow(scene, actions.x, actions.y + 60, actions.width, 40),
-      special: createActionRow(scene, actions.x, actions.y + 100, actions.width, 40)
+      move: createActionRow(scene, actions.x, actions.y + 22, actions.width, 48),
+      basic: createActionRow(scene, actions.x, actions.y + 70, actions.width, 48),
+      special: createActionRow(scene, actions.x, actions.y + 118, actions.width, 48)
     };
 
     this.actionRows.move.container.setDepth(24);
@@ -243,10 +243,10 @@ export class HUD {
 
     this.descriptionText = scene.add.text(description.x, description.y + 6, '', {
       fontFamily: 'monospace',
-      fontSize: '9px',
+      fontSize: '10px',
       color: 'rgba(255,255,255,0.25)',
       lineSpacing: 6,
-      wordWrap: { width: description.width }
+      wordWrap: { width: description.width - 8 }
     }).setDepth(23);
 
     this.noActionsText = scene.add.text(description.x + description.width / 2, description.y + description.height - 20, '', {
@@ -256,15 +256,15 @@ export class HUD {
       letterSpacing: 1
     }).setOrigin(0.5).setAlpha(0.7).setDepth(23);
 
-    this.endTurnSeparator = scene.add.rectangle(endTurn.x + endTurn.width / 2, endTurn.y - 12, endTurn.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.08)').color, 1).setDepth(23);
+    this.endTurnSeparator = scene.add.rectangle(controls.x + controls.width / 2, controls.y, controls.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.08)').color, 1).setDepth(23);
 
     this.endTurnColor = COLORS.player1;
-    this.endTurnBg = scene.add.rectangle(endTurn.x + endTurn.width / 2 - 28, endTurn.y + endTurn.height / 2, 204, 48, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
+    this.endTurnBg = scene.add.rectangle(endTurn.x + endTurn.width / 2, endTurn.y + endTurn.height / 2, endTurn.width, endTurn.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0, 245, 255, 0.4)').color, 1)
       .setDepth(24)
       .setInteractive({ useHandCursor: true });
 
-    this.endTurnText = scene.add.text(endTurn.x + 102, endTurn.y + endTurn.height / 2, 'FINALIZAR TURNO', {
+    this.endTurnText = scene.add.text(endTurn.x + endTurn.width / 2, endTurn.y + endTurn.height / 2, 'FINALIZAR TURNO', {
       fontFamily: 'monospace',
       fontSize: '11px',
       fontStyle: 'bold',
@@ -287,7 +287,7 @@ export class HUD {
 
     this.confirmationMode = null;
     this.confirmationTimer = null;
-    this.confirmationText = scene.add.text(sidebarContent.x + sidebarContent.width / 2, endTurn.y - 14, '', {
+    this.confirmationText = scene.add.text(controls.x + controls.width / 2, controls.y + 2, '', {
       fontFamily: 'monospace',
       fontSize: '12px',
       fontStyle: 'bold',
@@ -531,7 +531,7 @@ export class HUD {
     this.unitSubText.setColor(rgba(ownerInfo.color, 0.5));
 
     const hpRatio = selectedUnit.maxHp > 0 ? selectedUnit.hp / selectedUnit.maxHp : 0;
-    const hpWidth = Math.max(0, Math.round(220 * hpRatio));
+    const hpWidth = Math.max(0, Math.round(this.hpBarBack.width * hpRatio));
     let hpColor = '#39ff14';
     if (hpRatio < 0.25) {
       hpColor = '#ff3366';

@@ -1,18 +1,13 @@
 export const GAME_CONFIG = {
-  width: 1280,
-  height: 720,
+  width: 1440,
+  height: 810,
   backgroundColor: '#0d0d0f',
-  parent: 'app',
-  cellSize: 80,
+  parent: 'game-container',
+  cellSize: 90,
   gridCols: 8,
   gridRows: 8,
-  gridWidth: 640,
-  gridHeight: 640,
-
-  // Compatibilidad temporal para SetupScene y BattleScene durante la migración
-  // de las etapas siguientes. Los nuevos consumidores deben usar layout.js.
-  gridLeft: 158,
-  gridTop: 72
+  gridWidth: 720,
+  gridHeight: 720
 };
 
 export const COLORS = {

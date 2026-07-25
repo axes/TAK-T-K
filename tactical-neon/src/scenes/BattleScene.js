@@ -7,7 +7,7 @@ import { CombatSystem } from '../systems/CombatSystem.js';
 import { AISystem } from '../systems/AISystem.js';
 import { UNIT_TEMPLATES } from '../config.js';
 import { Unit } from '../entities/Unit.js';
-import { createDesktopTacticalLayout, centerOfCell } from '../ui/layout.js';
+import { createDesktopTacticalLayout, centerOfCell, createDesktopChrome } from '../ui/layout.js';
 import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
 
 export class BattleScene extends Phaser.Scene {
@@ -53,6 +53,9 @@ export class BattleScene extends Phaser.Scene {
   create() {
     this.layout = createDesktopTacticalLayout();
     this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
+    this.desktopChrome = createDesktopChrome(this, this.layout, {
+      leftLines: ['Esperando acciones...', '', '', '• Aquí se mostrarán movimientos.', '', '• Aquí se mostrarán ataques.', '', '• Aquí se mostrarán habilidades.']
+    });
     this.boardGroup = this.add.group();
     this.overlayGroup = this.add.group();
     this.resultGroup = this.add.group();
@@ -68,14 +71,18 @@ export class BattleScene extends Phaser.Scene {
       onSurrender: () => this.confirmSurrender()
     });
 
-    this.titleText = this.add.text(this.layout.header.x + this.layout.header.width - 16, this.layout.header.y + this.layout.header.height / 2, 'BATTLE MODE: HOT-SEAT', {
+    this.titleText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 27, 'TAK-T-K', {
       fontFamily: 'monospace',
-      fontSize: '13px',
-      color: 'rgba(255,255,255,0.5)',
+      fontSize: '16px',
+      fontStyle: 'bold',
+      color: COLORS.text,
       letterSpacing: 2
-    }).setOrigin(1, 0.5).setDepth(21);
+    }).setOrigin(0, 0.5).setDepth(21);
+    this.modeText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 51, '', {
+      fontFamily: 'monospace', fontSize: '9px', color: 'rgba(255,255,255,0.48)', letterSpacing: 1
+    }).setDepth(21);
 
-    this.statusText = this.add.text(24, 106, '', {
+    this.statusText = this.add.text(this.layout.leftSidebar.content.x, this.layout.leftSidebar.content.y, '', {
       fontFamily: 'monospace',
       fontSize: '1px',
       color: 'rgba(0,0,0,0)',
@@ -619,7 +626,7 @@ export class BattleScene extends Phaser.Scene {
       modeText = `BATTLE MODE: REMOTO (${this.playerId?.toUpperCase?.() || 'JUGADOR'})`;
     }
 
-    this.titleText.setText(modeText);
+    this.modeText.setText(modeText);
   }
 
   maybeRunAITurn() {

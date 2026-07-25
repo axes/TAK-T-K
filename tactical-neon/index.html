@@ -11,40 +11,53 @@
         --text: #ffffff;
       }
 
-      html,
-      body {
-        width: 100vw;
-        height: 100vh;
+      html {
+        width: 100%;
+        min-height: 100%;
         margin: 0;
         padding: 0;
-        background: #0d0d0f;
+        background: #08080a;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        background: #08080a;
         color: var(--text);
         font-family: monospace;
-        overflow: hidden;
+        overflow: auto;
         box-sizing: border-box;
       }
 
-      #app {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
+      #game-container {
+        width: 100%;
+        min-width: 1440px;
+        min-height: 810px;
         height: 100vh;
         margin: 0;
         padding: 0;
-        overflow: hidden;
         box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      canvas {
+      #game-container canvas {
         display: block;
-        margin: 0 auto;
-        max-width: none;
-        max-height: none;
+        margin: 0;
+        width: 1440px;
+        height: 810px;
+        flex: 0 0 auto;
+        padding: 0;
+        transform: none;
       }
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="game-container"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
