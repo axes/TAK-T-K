@@ -1,6 +1,6 @@
-import { GAME_CONFIG } from '../../tactical-neon/src/config.js';
-import { MovementSystem } from '../../tactical-neon/src/systems/MovementSystem.js';
-import { CombatSystem } from '../../tactical-neon/src/systems/CombatSystem.js';
+import { GAME_CONFIG } from '../../taktk-client/src/config.js';
+import { MovementSystem } from '../../taktk-client/src/systems/MovementSystem.js';
+import { CombatSystem } from '../../taktk-client/src/systems/CombatSystem.js';
 
 function playerToOwner(playerId) {
   if (playerId === 'p1') {

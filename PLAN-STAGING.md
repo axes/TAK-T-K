@@ -19,7 +19,7 @@ Dejar una versión pública y estable del multijugador remoto para probar con us
 ## Secuencia de trabajo
 
 1. Unificar la rama estable en `main` y dejar como referencia la release `v0.3.1`.
-2. Crear o actualizar el despliegue del servidor apuntando a `server/`.
+2. Crear o actualizar el despliegue del TAK-T-K Server apuntando a `taktk-server/`.
 3. Publicar el cliente Vite en una URL pública de staging.
 4. Configurar en el servidor la URL real del cliente para que CORS permita la conexión.
 5. Configurar en el cliente la URL pública del servidor con `VITE_SERVER_URL`.
@@ -50,8 +50,8 @@ Dejar una versión pública y estable del multijugador remoto para probar con us
 
 - `main` limpio y sincronizado.
 - `v0.3.1` documentado como referencia.
-- `server/DEPLOY.md` actualizado con la URL real del cliente.
-- `tactical-neon/.env.local` apuntando al servidor correcto.
+- `taktk-server/DEPLOY.md` actualizado con la URL real del cliente.
+- `taktk-client/.env.local` apuntando al servidor correcto.
 - Prueba de `room:create`, `room:join`, `game:setup`, `game:action`, `game:endturn` y `game:rematch_*` completada.
 
 ## Criterio para pasar a usuarios reales

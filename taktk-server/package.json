@@ -1,5 +1,5 @@
 {
-  "name": "tak-t-k-server",
+  "name": "taktk-server",
   "version": "1.0.0",
   "type": "module",
   "main": "src/server.js",

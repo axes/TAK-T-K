@@ -4,8 +4,8 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_DIR="$PROJECT_DIR/server"
-CLIENT_DIR="$PROJECT_DIR/tactical-neon"
+SERVER_DIR="$PROJECT_DIR/taktk-server"
+CLIENT_DIR="$PROJECT_DIR/taktk-client"
 
 SERVER_HOST="${SERVER_HOST:-127.0.0.1}"
 SERVER_PORT="${SERVER_PORT:-3000}"

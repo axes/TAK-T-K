@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
-import { UNIT_ORDER, UNIT_TEMPLATES, SETUP_ROWS } from '../../tactical-neon/src/config.js';
-import { Unit } from '../../tactical-neon/src/entities/Unit.js';
+import { UNIT_ORDER, UNIT_TEMPLATES, SETUP_ROWS } from '../../taktk-client/src/config.js';
+import { Unit } from '../../taktk-client/src/entities/Unit.js';
 import { RoomManager } from './RoomManager.js';
 import { GameValidator } from './GameValidator.js';
 

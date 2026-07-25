@@ -180,3 +180,20 @@ Validar con Chrome al `100 %` en monitor Full HD:
 - Exportación de registros.
 - Estadísticas de balance y comportamiento.
 - Uso de partidas almacenadas para evaluar o mejorar la IA.
+
+## Sistema de temas visuales
+
+- Crear `taktk-client/src/themes`.
+- Migrar el estilo actual a `themes/neon`.
+- Crear un registro central de temas.
+- Separar colores, tipografía, fondos, iconos y texturas.
+- Evitar colores hardcodeados en escenas y componentes.
+- Definir el tema `neon` como predeterminado.
+- Preparar un selector de tema.
+- Persistir la preferencia local del jugador.
+- Diseñar posteriormente:
+  - High Contrast;
+  - Medieval;
+  - Notebook.
+- Validar contraste y accesibilidad.
+- Mantener las reglas y el layout independientes del tema.

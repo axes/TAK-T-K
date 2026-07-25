@@ -59,7 +59,7 @@ La idea es que TAK-T-K sirva como un punto de partida limpio, entendible y flexi
 Si tienes Node.js instalado:
 
 ```bash
-cd tactical-neon
+cd taktk-client
 npm install
 npm run dev
 ```
@@ -70,7 +70,7 @@ Luego abre la URL que te muestra Vite en el navegador.
 
 ```bash
 git clone git@github.com:axes/TAK-T-K.git
-cd TAK-T-K/tactical-neon
+cd TAK-T-K/taktk-client
 npm install
 npm run dev
 ```
@@ -88,7 +88,7 @@ O simplemente haz un fork y empieza a experimentar.
 ## Estructura principal
 
 ```text
-tactical-neon/
+taktk-client/
 ├── index.html
 ├── package.json
 ├── src/
@@ -122,7 +122,7 @@ La implementación quedó ordenada en cuatro sesiones/ramas:
 - `state-sync`: `SetupScene` y `BattleScene` en modo remoto
 - `turn-sync`: validación en servidor con `GameValidator` y manejo de desconexión
 
-La documentación de despliegue y staging vive en [server/DEPLOY.md](server/DEPLOY.md) y [PLAN-STAGING.md](PLAN-STAGING.md).
+La documentación de despliegue y staging vive en [taktk-server/DEPLOY.md](taktk-server/DEPLOY.md) y [PLAN-STAGING.md](PLAN-STAGING.md).
 
 ## Cambios recientes (abril 2026)
 
@@ -154,20 +154,33 @@ La documentación de despliegue y staging vive en [server/DEPLOY.md](server/DEPL
 ### Marcadores de unidad
 
 - en batalla: unidad renderizada con círculo por propietario y letra centrada
-- fallback de glifos simples disponible para setup en [tactical-neon/src/ui/unitGlyph.js](tactical-neon/src/ui/unitGlyph.js):
+- fallback de glifos simples disponible para setup en [taktk-client/src/ui/unitGlyph.js](taktk-client/src/ui/unitGlyph.js):
 	- Vanguard: cuadrado
 	- Sniper: círculo
 	- Mystic: rombo
 
 ### Preparación para sprites
 
-- carpeta preparada para sprites de unidades en [tactical-neon/public/assets/sprites/units](tactical-neon/public/assets/sprites/units)
-- archivo de control de carpeta: [tactical-neon/public/assets/sprites/units/.gitkeep](tactical-neon/public/assets/sprites/units/.gitkeep)
+- carpeta preparada para sprites de unidades en [taktk-client/public/assets/sprites/units](taktk-client/public/assets/sprites/units)
+- archivo de control de carpeta: [taktk-client/public/assets/sprites/units/.gitkeep](taktk-client/public/assets/sprites/units/.gitkeep)
 
 ### Limpieza y estructura del proyecto
 
-- reglas de ignorado ampliadas en [tactical-neon/.gitignore](tactical-neon/.gitignore)
-- lockfile generado para reproducibilidad: [tactical-neon/package-lock.json](tactical-neon/package-lock.json)
+- reglas de ignorado ampliadas en [taktk-client/.gitignore](taktk-client/.gitignore)
+- lockfile generado para reproducibilidad: [taktk-client/package-lock.json](taktk-client/package-lock.json)
+
+## Arquitectura visual futura
+
+TAK-T-K separará la lógica del juego de sus temas visuales.
+
+El tema predeterminado será Neon, pero la arquitectura podrá incorporar posteriormente temas como:
+
+- High Contrast;
+- Medieval;
+- Notebook;
+- otros temas visuales.
+
+Los temas podrán modificar colores, tipografías, fondos, iconos, sprites y efectos, pero no las reglas ni la geometría del layout.
 
 ## Licencia
 

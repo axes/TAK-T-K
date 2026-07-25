@@ -35,18 +35,18 @@
 
 ### Modificado
 - `RoomManager` ahora soporta reinicio de sala para rematch y cierre explícito de sala remota.
-- `server/src/server.js` alterna el jugador inicial entre partidas consecutivas de una misma sala remota.
+- `taktk-server/src/server.js` alterna el jugador inicial entre partidas consecutivas de una misma sala remota.
 - Botón `JUGAR DE NUEVO` en remoto ahora inicia el handshake de rematch en vez de volver al lobby.
 
 ## [v0.3.0] — 2026-04-13 — Fase 3
 
 ### Agregado
-- Servidor Node.js + Socket.IO en `server/`.
+- TAK-T-K Server: Node.js + Socket.IO en `taktk-server/`.
 - `LobbyScene`: creación y unión a salas por ID.
 - `SocketManager`: wrapper cliente de Socket.IO.
 - Modo `remote` en `SetupScene` y `BattleScene`.
 - Validación de acciones en servidor (`GameValidator`).
-- Instrucciones de deploy en `server/DEPLOY.md`.
+- Instrucciones de deploy en `taktk-server/DEPLOY.md`.
 
 ### Modificado
 - `MainScene`: card `REMOTO` habilitada.
