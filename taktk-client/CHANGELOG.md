@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-07-26 — push a `main`
+
+- fix(ci): update paths after project restructure
+
+
 ## 2026-07-19 — push a `main`
 
 - chore(dev): formalizar entorno local del proyecto
