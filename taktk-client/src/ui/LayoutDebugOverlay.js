@@ -20,6 +20,9 @@ const REGIONS = [
   { key: 'rightSidebar.controls', label: 'CONTROLS', color: 0x66ff99 },
   { key: 'rightSidebar.endTurn', label: 'END TURN', color: 0xff6699 },
   { key: 'rightSidebar.surrenderButton', label: 'SURRENDER', color: 0xff0033 },
+  { key: 'cover', label: 'COVER', color: 0x00f5ff },
+  { key: 'coverCards', label: 'COVER CARDS', color: 0xffaa00 },
+  { key: 'coverNavigation', label: 'COVER NAV', color: 0xff66cc },
   { key: 'footer', label: 'FOOTER', color: 0xffffff }
 ];
 

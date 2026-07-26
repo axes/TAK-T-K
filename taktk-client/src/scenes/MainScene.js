@@ -23,11 +23,24 @@ export class MainScene extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor('#0d0d0f');
+    this.cameras.main.setBackgroundColor(GAME_CONFIG.backgroundColor);
     this.layout = createDesktopTacticalLayout();
+
+    const mainCenterX = this.layout.main.x + this.layout.main.width / 2;
+    const cover = { x: mainCenterX - 440, y: 112, width: 880, height: 520 };
+    const cardRegion = { x: mainCenterX - 380, y: 342, width: 760, height: 138 };
+    const navigationRegion = { x: mainCenterX - 300, y: 548, width: 600, height: 32 };
+    this.layout.cover = cover;
+    this.layout.coverCards = cardRegion;
+    this.layout.coverNavigation = navigationRegion;
+
     this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
-    createDesktopChrome(this, this.layout, { drawLeftPanel: false, drawRightPanel: false, showLeftContent: false });
-    const centerX = this.layout.boardArea.x + this.layout.boardArea.width / 2;
+    const desktopChrome = createDesktopChrome(this, this.layout, {
+      drawLeftPanel: false,
+      drawRightPanel: false,
+      showLeftContent: false
+    });
+    desktopChrome.footerText.setText('TAK-T-K · v0.3.1 · COPYLEFT · DESARROLLO ACTIVO · CLIENTE PHASER');
 
     this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'TAK-T-K', {
       fontFamily: 'monospace', fontSize: '16px', fontStyle: 'bold', color: COLORS.text, letterSpacing: 2
@@ -36,73 +49,78 @@ export class MainScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.45)', letterSpacing: 2
     }).setOrigin(0.5).setDepth(12);
 
-    const title = this.add.text(centerX, 150, 'MUEVE. ATACA. DOMINA.', {
+    const title = this.add.text(mainCenterX, 156, 'TAK-T-K', {
       fontFamily: 'monospace',
-      fontSize: '24px',
+      fontSize: '38px',
       fontStyle: 'bold',
-      color: '#00f5ff',
+      color: COLORS.player1,
       align: 'center',
-      letterSpacing: 4
+      letterSpacing: 6
     }).setOrigin(0.5).setAlpha(0);
 
-    const slogan = this.add.text(centerX, 198, 'UN JUEGO TÁCTICO POR TURNOS', {
+    const slogan = this.add.text(mainCenterX, 204, 'MUEVE. ATACA. DOMINA.', {
       fontFamily: 'monospace',
-      fontSize: '12px',
-      color: 'rgba(255, 255, 255, 0.5)',
+      fontSize: '14px',
+      color: COLORS.text,
       align: 'center',
-      letterSpacing: 4
+      letterSpacing: 3
     }).setOrigin(0.5).setAlpha(0);
 
-    const description = this.add.text(centerX, 238, 'DECISIONES PRECISAS. SIN MARGEN DE ERROR.', {
+    const description = this.add.text(mainCenterX, 242, 'UN JUEGO TÁCTICO POR TURNOS', {
       fontFamily: 'monospace',
       fontSize: '11px',
-      color: 'rgba(255, 255, 255, 0.25)',
+      color: 'rgba(255,255,255,0.45)',
       align: 'center',
-      letterSpacing: 1,
-      lineSpacing: 8
+      letterSpacing: 2
     }).setOrigin(0.5).setAlpha(0);
 
-    const separator = this.add.rectangle(centerX, 270, 360, 1, colorToNumber('rgba(0, 245, 255, 0.2)'), 1).setAlpha(0);
+    const separator = this.add.rectangle(mainCenterX, 276, 420, 1, colorToNumber('rgba(0,245,255,0.25)'), 1).setAlpha(0);
 
-    const modeLabel = this.add.text(centerX, 294, 'SELECCIONAR MODO', {
+    const modeLabel = this.add.text(mainCenterX, 310, 'SELECCIONAR MODO', {
       fontFamily: 'monospace',
-      fontSize: '9px',
-      color: 'rgba(255,255,255,0.3)',
+      fontSize: '10px',
+      color: 'rgba(255,255,255,0.5)',
       align: 'center',
       letterSpacing: 2
     }).setOrigin(0.5).setAlpha(0);
 
     const cards = [
       this.createModeCard({
-        x: centerX - 324,
-        y: 320,
-        title: 'HOTSEAT',
+        x: cardRegion.x,
+        y: cardRegion.y,
+        title: 'HOT-SEAT',
         subtitle: 'DOS JUGADORES\nEN ESTA PANTALLA',
         normalBorder: 'rgba(0,245,255,0.3)',
         hoverBorder: 'rgba(0,245,255,0.8)',
+        pressedBorder: 'rgba(0,245,255,1)',
         hoverFill: 'rgba(0,245,255,0.06)',
-        titleColor: '#00f5ff',
+        pressedFill: 'rgba(0,245,255,0.12)',
+        titleColor: COLORS.player1,
         onClick: () => this.scene.start('SetupScene', { mode: 'pvp' })
       }),
       this.createModeCard({
-        x: centerX - 100,
-        y: 320,
+        x: cardRegion.x + 260,
+        y: cardRegion.y,
         title: 'VS IA',
-        subtitle: 'JUEGA CONTRA\nEL SISTEMA',
+        subtitle: 'JUEGA CONTRA\nLA COMPUTADORA',
         normalBorder: 'rgba(255,0,229,0.3)',
         hoverBorder: 'rgba(255,0,229,0.8)',
+        pressedBorder: 'rgba(255,0,229,1)',
         hoverFill: 'rgba(255,0,229,0.06)',
-        titleColor: '#ff00e5',
+        pressedFill: 'rgba(255,0,229,0.12)',
+        titleColor: COLORS.player2,
         onClick: () => this.scene.start('SetupScene', { mode: 'pve' })
       }),
       this.createModeCard({
-        x: centerX + 124,
-        y: 320,
+        x: cardRegion.x + 520,
+        y: cardRegion.y,
         title: 'REMOTO',
-        subtitle: 'SALAS PRIVADAS\nPOR CODIGO',
+        subtitle: 'CREA O ÚNETE\nA UNA SALA',
         normalBorder: 'rgba(255,170,0,0.35)',
         hoverBorder: 'rgba(255,170,0,0.85)',
+        pressedBorder: 'rgba(255,170,0,1)',
         hoverFill: 'rgba(255,170,0,0.08)',
+        pressedFill: 'rgba(255,170,0,0.14)',
         titleColor: '#ffaa00',
         onClick: () => this.scene.start('LobbyScene')
       })
@@ -113,16 +131,10 @@ export class MainScene extends Phaser.Scene {
       target.setAlpha(0);
     }
 
-    const secondaryButtons = this.createSecondaryButtons();
+    const secondaryButtons = this.createSecondaryButtons(navigationRegion);
     for (const button of secondaryButtons) {
       button.text.setAlpha(0);
     }
-
-    const versionText = this.add.text(this.layout.boardArea.x + this.layout.boardArea.width - 18, 520, 'v0.3.1 — FASE 3', {
-      fontFamily: 'monospace',
-      fontSize: '9px',
-      color: 'rgba(255,255,255,0.15)'
-    }).setOrigin(1, 1);
 
     this.tweens.add({
       targets: title,
@@ -130,139 +142,87 @@ export class MainScene extends Phaser.Scene {
       delay: 0,
       duration: 800,
       onComplete: () => {
-        this.tweens.add({
-          targets: title,
-          alpha: 0.85,
-          duration: 2000,
-          yoyo: true,
-          repeat: -1
-        });
+        this.tweens.add({ targets: title, alpha: 0.85, duration: 2000, yoyo: true, repeat: -1 });
       }
     });
-
-    this.tweens.add({ targets: slogan, alpha: 1, delay: 400, duration: 600 });
-    this.tweens.add({ targets: [description, separator], alpha: 1, delay: 700, duration: 500 });
-    this.tweens.add({ targets: [modeLabel, ...cardTargets], alpha: 1, delay: 900, duration: 500 });
-    this.tweens.add({
-      targets: secondaryButtons.map((button) => button.text),
-      alpha: 1,
-      delay: 1100,
-      duration: 400
-    });
-
-    versionText.setAlpha(0);
-    this.tweens.add({ targets: versionText, alpha: 1, delay: 1200, duration: 400 });
+    this.tweens.add({ targets: [slogan, description], alpha: 1, delay: 350, duration: 500 });
+    this.tweens.add({ targets: [separator, modeLabel, ...cardTargets], alpha: 1, delay: 700, duration: 500 });
+    this.tweens.add({ targets: secondaryButtons.map((button) => button.text), alpha: 1, delay: 950, duration: 400 });
   }
 
   createModeCard(config) {
-    const width = 200;
-    const height = 120;
+    const width = 240;
+    const height = 138;
     const radius = 4;
-    const titleY = config.y + 40;
-    const subtitleY = config.y + 65;
+    const centerX = config.x + width / 2;
     const graphics = this.add.graphics();
-
-    const title = this.add.text(config.x + width / 2, titleY, config.title, {
-      fontFamily: 'monospace',
-      fontSize: '13px',
-      fontStyle: 'bold',
-      color: config.titleColor,
-      align: 'center',
-      letterSpacing: 2
+    const title = this.add.text(centerX, config.y + 44, config.title, {
+      fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold', color: config.titleColor,
+      align: 'center', letterSpacing: 2
+    }).setOrigin(0.5);
+    const subtitle = this.add.text(centerX, config.y + 83, config.subtitle, {
+      fontFamily: 'monospace', fontSize: '9px', color: 'rgba(255,255,255,0.38)',
+      align: 'center', lineSpacing: 4, letterSpacing: 1
     }).setOrigin(0.5);
 
-    const subtitle = this.add.text(config.x + width / 2, subtitleY, config.subtitle, {
-      fontFamily: 'monospace',
-      fontSize: '9px',
-      color: config.disabled ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.3)',
-      align: 'center',
-      lineSpacing: 4,
-      letterSpacing: 1
-    }).setOrigin(0.5);
-
-    drawRoundedCard(graphics, config.x, config.y, width, height, radius, config.normalBorder);
+    const drawState = (borderColor, fillColor = null) => {
+      drawRoundedCard(graphics, config.x, config.y, width, height, radius, borderColor, fillColor);
+    };
+    drawState(config.normalBorder);
 
     const fadeTargets = [graphics, title, subtitle];
-
     if (!config.disabled) {
-      const hitArea = this.add.zone(config.x + width / 2, config.y + height / 2, width, height);
+      const hitArea = this.add.zone(centerX, config.y + height / 2, width, height);
       hitArea.setInteractive({ useHandCursor: true });
-      hitArea.on('pointerover', () => {
-        drawRoundedCard(graphics, config.x, config.y, width, height, radius, config.hoverBorder, config.hoverFill);
+      hitArea.on('pointerover', () => drawState(config.hoverBorder, config.hoverFill));
+      hitArea.on('pointerout', () => drawState(config.normalBorder));
+      hitArea.on('pointerdown', () => {
+        drawState(config.pressedBorder, config.pressedFill);
+        config.onClick?.();
       });
-      hitArea.on('pointerout', () => {
-        drawRoundedCard(graphics, config.x, config.y, width, height, radius, config.normalBorder);
-      });
-      hitArea.on('pointerdown', () => config.onClick?.());
       fadeTargets.push(hitArea);
       hitArea.setAlpha(0);
-    } else {
-      title.setAlpha(0.25);
-      subtitle.setAlpha(0.25);
-      if (config.showPhaseBadge) {
-        const badgeBg = this.add.rectangle(config.x + width - 28, config.y + 14, 54, 18, colorToNumber('rgba(255,255,255,0.08)'), 1);
-        const badgeText = this.add.text(config.x + width - 28, config.y + 14, 'FASE 3', {
-          fontFamily: 'monospace',
-          fontSize: '8px',
-          color: 'rgba(255,255,255,0.3)'
-        }).setOrigin(0.5);
-        fadeTargets.push(badgeBg, badgeText);
-      }
     }
 
     return { fadeTargets };
   }
 
-  createSecondaryButtons() {
+  createSecondaryButtons(region) {
     const labels = [
       { text: 'CÓMO JUGAR', scene: 'HowToPlayScene' },
       { text: 'HISTORIA', scene: 'StoryScene' },
       { text: 'CRÉDITOS', scene: 'CreditsScene' },
       { text: 'CONFIGURACIÓN', scene: 'SettingsScene' }
     ];
-
-    const tempTexts = labels.map((item) => this.add.text(0, -1000, item.text, {
-      fontFamily: 'monospace',
-      fontSize: '10px',
-      color: 'rgba(255,255,255,0.3)',
-      letterSpacing: 2
-    }));
-    const widths = tempTexts.map((text) => text.width);
-    for (const temp of tempTexts) {
-      temp.destroy();
+    const gap = 32;
+    const textStyle = { fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.38)', letterSpacing: 2 };
+    const measuringTexts = labels.map((item) => this.add.text(0, -1000, item.text, textStyle));
+    const widths = measuringTexts.map((text) => text.width);
+    for (const text of measuringTexts) {
+      text.destroy();
     }
 
-    const gap = 40;
     const totalWidth = widths.reduce((acc, value) => acc + value, 0) + gap * (labels.length - 1);
-    let currentX = GAME_CONFIG.width / 2 - totalWidth / 2;
+    let currentX = region.x + (region.width - totalWidth) / 2;
     const buttons = [];
 
     for (let i = 0; i < labels.length; i += 1) {
       const item = labels[i];
-      const width = widths[i];
-      const centerX = currentX + width / 2;
-      const text = this.add.text(centerX, 530, item.text, {
-        fontFamily: 'monospace',
-        fontSize: '10px',
-        color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 2
-      }).setOrigin(0.5);
-
-      const underline = this.add.rectangle(centerX, 540, width, 1, colorToNumber('rgba(255,255,255,0.3)'), 1).setVisible(false);
-
+      const centerX = currentX + widths[i] / 2;
+      const text = this.add.text(centerX, region.y, item.text, textStyle).setOrigin(0.5, 0);
+      const underline = this.add.rectangle(centerX, region.y + 18, widths[i], 1, colorToNumber('rgba(255,255,255,0.5)'), 1).setVisible(false);
       text.setInteractive({ useHandCursor: true });
       text.on('pointerover', () => {
-        text.setColor('rgba(255,255,255,0.7)');
+        text.setColor('rgba(255,255,255,0.8)');
         underline.setVisible(true);
       });
       text.on('pointerout', () => {
-        text.setColor('rgba(255,255,255,0.3)');
+        text.setColor('rgba(255,255,255,0.38)');
         underline.setVisible(false);
       });
       text.on('pointerdown', () => this.scene.start(item.scene));
-
       buttons.push({ text, underline });
-      currentX += width + gap;
+      currentX += widths[i] + gap;
     }
 
     return buttons;

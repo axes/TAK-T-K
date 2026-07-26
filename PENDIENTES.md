@@ -61,22 +61,21 @@ La primera etapa de estabilización del layout desktop fue completada.
 
 La siguiente etapa estará enfocada en ordenar el contenido de cada escena dentro del layout ya estabilizado.
 
-### UI-SCENES-01 — Pantalla inicial
+### UI-SCENES-01 — Portada [completada]
 
-- Definir una composición propia para la portada.
-- Evitar que parezca una BattleScene vacía.
-- Reducir visualmente los paneles laterales cuando no tengan contenido.
-- Ordenar título, lema, descripción y selector de modo.
-- Alinear las tarjetas Hot-seat, IA y Remoto.
-- Mejorar espaciados verticales.
-- Integrar correctamente versión y fase dentro del footer.
-- Revisar navegación secundaria:
-  - Cómo jugar;
-  - Historia;
-  - Créditos;
-  - Configuración.
+- Composición central propia dentro de `main`, sin paneles vacíos de batalla.
+- Jerarquía definida para marca, lema, descripción y selector de modo.
+- Tarjetas Hot-seat, IA y Remoto alineadas con dimensiones y separación uniformes.
+- Estados normal, hover y pressed consolidados para las tarjetas.
+- Navegación secundaria conservada en una fila compacta.
+- Versión, producto, copyleft y estado de desarrollo integrados en el footer.
+- Regiones `cover`, `coverCards` y `coverNavigation` visibles mediante F2.
 
-### UI-SCENES-02 — SetupScene
+Decisión: el header conserva la marca compacta y la portada usa un título principal independiente para reforzar la identidad de inicio sin duplicar el lema.
+
+Los ajustes visuales manuales de la portada quedan pendientes de validación en navegador. El detalle de esta fase está documentado en [UI_SCENES_BACKLOG.md](UI_SCENES_BACKLOG.md).
+
+### UI-SCENES-02 — SetupScene [próxima tarea]
 
 - Corregir jerarquía del header.
 - Ordenar título, estado e instrucción contextual.
