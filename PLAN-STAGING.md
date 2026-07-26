@@ -16,6 +16,23 @@ Dejar una versión pública y estable del multijugador remoto para probar con us
 - Servidor: `PORT`, `CLIENT_URL`, `PRODUCTION_CLIENT_URL`
 - Cliente: `VITE_SERVER_URL`
 
+## Configuración manual de plataformas
+
+No existe un `vercel.json` en el repositorio. La configuración del cliente debe actualizarse
+manualmente en el dashboard de Vercel:
+
+- Root Directory: `taktk-client`
+- Framework Preset: `Vite`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+La configuración de Render debe utilizar:
+
+- Root Directory: `taktk-server`
+- Build Command: `npm install`
+- Start Command: `npm start`
+
 ## Secuencia de trabajo
 
 1. Unificar la rama estable en `main` y dejar como referencia la release `v0.3.1`.

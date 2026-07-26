@@ -26,7 +26,7 @@ jobs:
 
           event_path = os.environ["GITHUB_EVENT_PATH"]
           branch = os.environ["BRANCH"]
-          changelog = "tactical-neon/CHANGELOG.md"
+          changelog = "taktk-client/CHANGELOG.md"
 
           with open(event_path) as f:
               event = json.load(f)
@@ -70,7 +70,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tactical-neon/CHANGELOG.md
+          git add taktk-client/CHANGELOG.md
           git diff --cached --quiet && echo "Sin cambios que commitear." && exit 0
           git commit -m "docs: actualizar changelog [skip ci]"
           git push
