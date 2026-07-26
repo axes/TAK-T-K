@@ -40,7 +40,7 @@ export class MainScene extends Phaser.Scene {
       drawRightPanel: false,
       showLeftContent: false
     });
-    desktopChrome.footerText.setText('TAK-T-K · v0.3.1 · COPYLEFT · DESARROLLO ACTIVO · CLIENTE PHASER');
+    desktopChrome.footerText.setText('TAK-T-K · 0.4.0-dev · COPYLEFT · DESARROLLO ACTIVO · CLIENTE PHASER');
 
     this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'TAK-T-K', {
       fontFamily: 'monospace', fontSize: '16px', fontStyle: 'bold', color: COLORS.text, letterSpacing: 2

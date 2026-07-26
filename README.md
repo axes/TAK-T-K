@@ -6,9 +6,17 @@ Este proyecto está siendo **vibecodeado**: iterado con ayuda de múltiples herr
 
 ## Versión actual
 
-- referencia de release: **v0.3.1**
-- tag sugerida para el corte estable: **v0.3.1**
+- última release estable: **v0.3.1**
+- versión en desarrollo: **0.4.0-dev**
+- próxima release: **v0.4.0** (sin tag todavía)
+- ciclo actual: **renovación UI desktop**
+- fuente humana de versión: [VERSION](VERSION)
+- convención de commits: [COMMIT_CONVENTION.md](COMMIT_CONVENTION.md)
+- changelog: [taktk-client/CHANGELOG.md](taktk-client/CHANGELOG.md)
 - plan de staging: [PLAN-STAGING.md](PLAN-STAGING.md)
+
+El workflow de changelog se mantiene como validación manual mediante `workflow_dispatch`; no
+genera ni commitea entradas automáticas por cada push.
 
 ## Demo / Staging
 

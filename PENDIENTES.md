@@ -196,3 +196,12 @@ Validar con Chrome al `100 %` en monitor Full HD:
   - Notebook.
 - Validar contraste y accesibilidad.
 - Mantener las reglas y el layout independientes del tema.
+
+## Control de versiones
+
+- Versión estable actual: `v0.3.1`.
+- Ciclo en desarrollo: `0.4.0-dev`.
+- Próxima release: `v0.4.0`.
+- Cerrar `v0.4.0` al completar la renovación UI desktop.
+- Crear tag solo después de regresión completa.
+- Centralizar posteriormente la versión mostrada en cliente y servidor.
