@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { COLORS, GAME_CONFIG, PLAYER_INFO } from '../config.js';
+import { COLORS, GAME_CONFIG, PLAYER_INFO, FONTS } from '../config.js';
 import { HUD } from '../ui/HUD.js';
 import { TurnSystem } from '../systems/TurnSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
@@ -72,18 +72,18 @@ export class BattleScene extends Phaser.Scene {
     });
 
     this.titleText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 27, 'TAK-T-K', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '16px',
       fontStyle: 'bold',
-      color: COLORS.text,
+      color: COLORS.textPrimary,
       letterSpacing: 2
     }).setOrigin(0, 0.5).setDepth(21);
     this.modeText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 51, '', {
-      fontFamily: 'monospace', fontSize: '9px', color: 'rgba(255,255,255,0.48)', letterSpacing: 1
+      fontFamily: FONTS.GAME, fontSize: '9px', color: 'rgba(255,255,255,0.48)', letterSpacing: 1
     }).setDepth(21);
 
     this.statusText = this.add.text(this.layout.leftSidebar.content.x, this.layout.leftSidebar.content.y, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '1px',
       color: 'rgba(0,0,0,0)',
       letterSpacing: 0
@@ -163,7 +163,7 @@ export class BattleScene extends Phaser.Scene {
   drawBoard() {
     for (let y = 0; y < GAME_CONFIG.gridRows; y += 1) {
       for (let x = 0; x < GAME_CONFIG.gridCols; x += 1) {
-        const baseColor = (x + y) % 2 === 0 ? COLORS.cellA : COLORS.cellB;
+        const baseColor = (x + y) % 2 === 0 ? COLORS.boardCellA : COLORS.boardCellB;
         const cell = this.add.rectangle(
           this.layout.board.x + x * this.layout.cellSize + this.layout.cellSize / 2,
           this.layout.board.y + y * this.layout.cellSize + this.layout.cellSize / 2,
@@ -171,17 +171,17 @@ export class BattleScene extends Phaser.Scene {
           GAME_CONFIG.cellSize,
           Phaser.Display.Color.HexStringToColor(baseColor).color,
           1
-        ).setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+        ).setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.boardGridBorder).color, 1);
 
         cell.setInteractive({ useHandCursor: true });
         cell.on('pointerover', () => {
           this.hoveredCell = { x, y };
-          cell.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.hover).color, 1);
+        cell.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.stateHover).color, 1);
           this.renderOverlays();
         });
         cell.on('pointerout', () => {
           this.hoveredCell = null;
-          cell.setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+        cell.setStrokeStyle(0.5, Phaser.Display.Color.HexStringToColor(COLORS.boardGridBorder).color, 1);
           this.renderOverlays();
         });
         cell.on('pointerdown', () => this.handleCellClick(x, y));
@@ -429,12 +429,12 @@ export class BattleScene extends Phaser.Scene {
         .setStrokeStyle(1.5, Phaser.Display.Color.HexStringToColor(color).color, 1);
 
       if (unit.hp <= 3) {
-        circle.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.attack).color, 1);
+        circle.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.stateAttack).color, 1);
       }
 
       this.unitGroup.add(circle);
       const label = this.add.text(x, y, unit.symbol, {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '14px',
         fontStyle: 'bold',
         color
@@ -474,14 +474,14 @@ export class BattleScene extends Phaser.Scene {
 
     if (showMoves) {
       for (const cell of moveCells) {
-        this.addOverlay(cell.x, cell.y, COLORS.move, 0.2, false);
+        this.addOverlay(cell.x, cell.y, COLORS.stateMove, 0.2, false);
       }
     }
 
     if (showBasics) {
       for (const target of basicTargets) {
         if (target.position) {
-          this.addOverlay(target.position.x, target.position.y, COLORS.attack, 0.18, false);
+          this.addOverlay(target.position.x, target.position.y, COLORS.stateAttack, 0.18, false);
         }
       }
     }
@@ -489,13 +489,13 @@ export class BattleScene extends Phaser.Scene {
     if (showSpecials) {
       for (const target of specialTargets) {
         if (target.position) {
-          this.addOverlay(target.position.x, target.position.y, COLORS.attack, 0.18, false);
+          this.addOverlay(target.position.x, target.position.y, COLORS.stateAttack, 0.18, false);
         }
       }
     }
 
     if (this.hoveredCell) {
-      this.addOverlay(this.hoveredCell.x, this.hoveredCell.y, COLORS.hover, 0, true);
+      this.addOverlay(this.hoveredCell.x, this.hoveredCell.y, COLORS.stateHover, 0, true);
     }
   }
 
@@ -714,7 +714,7 @@ export class BattleScene extends Phaser.Scene {
 
     const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(200);
     const title = this.add.text(centerX, centerY, winnerText, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '28px',
       fontStyle: 'bold',
       color: winnerColor,
@@ -722,7 +722,7 @@ export class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(201).setAlpha(0);
 
     const subtitle = this.add.text(centerX, centerY + 50, `TURNO ${this.gameState.turnNumber} · UNIDADES ELIMINADAS: ${eliminated}`, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       color: 'rgba(255,255,255,0.4)'
     }).setOrigin(0.5).setDepth(201).setAlpha(0.95);
@@ -778,12 +778,23 @@ export class BattleScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     const text = this.add.text(x, y, label, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       fontStyle: 'bold',
       color,
       letterSpacing: 2
-    }).setOrigin(0.5).setDepth(203);
+    }).setOrigin(0.5).setDepth(203).setInteractive({ useHandCursor: true });
+
+    let activated = false;
+    const activate = () => {
+      if (activated) {
+        return;
+      }
+      activated = true;
+      button.disableInteractive();
+      text.disableInteractive();
+      onClick();
+    };
 
     button.on('pointerover', () => {
       button.setFillStyle(border, 0.08);
@@ -793,7 +804,8 @@ export class BattleScene extends Phaser.Scene {
       button.setFillStyle(border, 0);
       button.setStrokeStyle(1, border, 0.8);
     });
-    button.on('pointerdown', () => onClick());
+    button.on('pointerdown', activate);
+    text.on('pointerdown', activate);
 
     this.resultGroup.add(button);
     this.resultGroup.add(text);
@@ -812,27 +824,27 @@ export class BattleScene extends Phaser.Scene {
         .setDepth(251)
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.45)').color, 1);
       const title = this.add.text(centerX, centerY - 68, 'REMATCH', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '24px',
         fontStyle: 'bold',
         color: '#00f5ff',
         letterSpacing: 3
       }).setOrigin(0.5).setDepth(252);
       const subtitle = this.add.text(centerX, centerY - 24, 'CONFIRMA EN AMBOS CLIENTES', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '11px',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(252);
       const status = this.add.text(centerX, centerY + 14, '', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '12px',
         color: '#ffffff',
         align: 'center',
         letterSpacing: 1
       }).setOrigin(0.5).setDepth(252);
       const timer = this.add.text(centerX, centerY + 48, '', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '11px',
         color: 'rgba(255,255,255,0.65)',
         letterSpacing: 1
@@ -843,7 +855,7 @@ export class BattleScene extends Phaser.Scene {
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#39ff14').color, 0.9)
         .setInteractive({ useHandCursor: true });
       const yesText = this.add.text(centerX - 60, centerY + 100, 'CONFIRMAR', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '11px',
         fontStyle: 'bold',
         color: '#39ff14',
@@ -855,7 +867,7 @@ export class BattleScene extends Phaser.Scene {
         .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
         .setInteractive({ useHandCursor: true });
       const noText = this.add.text(centerX + 60, centerY + 100, 'CANCELAR', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '11px',
         fontStyle: 'bold',
         color: '#ff3366',
@@ -1125,14 +1137,14 @@ export class BattleScene extends Phaser.Scene {
     const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
     const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
     const title = this.add.text(centerX, centerY - 46, 'SALA CERRADA', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '28px',
       fontStyle: 'bold',
       color: '#ff3366',
       letterSpacing: 3
     }).setOrigin(0.5).setDepth(241);
     const subtitleText = this.add.text(centerX, centerY - 4, subtitle, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '12px',
       color: 'rgba(255,255,255,0.65)',
       letterSpacing: 2
@@ -1161,7 +1173,7 @@ export class BattleScene extends Phaser.Scene {
     const centerY = this.layout.viewport.y + this.layout.viewport.height / 2;
     const overlay = this.add.rectangle(centerX, centerY, this.layout.viewport.width, this.layout.viewport.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0.95).setDepth(240);
     const title = this.add.text(centerX, centerY - 46, 'OPONENTE DESCONECTADO', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '28px',
       fontStyle: 'bold',
       color: '#ff3366',

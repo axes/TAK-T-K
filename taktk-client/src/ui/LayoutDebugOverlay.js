@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { DEBUG_LAYOUT } from '../config.js';
+import { DEBUG_LAYOUT, FONTS } from '../config.js';
 
 const REGIONS = [
   { key: 'canvas', label: 'CANVAS', color: 0xffffff },
@@ -67,7 +67,7 @@ export class LayoutDebugOverlay {
       const labelX = Math.max(this.layout.canvas.x + 4, Math.min(rect.x + 6, this.layout.canvas.x + this.layout.canvas.width - 150));
 
       const label = this.scene.add.text(labelX, labelY, this.formatLabel(region.label, rect), {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '10px',
         color: `#${region.color.toString(16).padStart(6, '0')}`,
         backgroundColor: 'rgba(0,0,0,0.72)',
@@ -86,14 +86,14 @@ export class LayoutDebugOverlay {
     this.graphics.lineBetween(this.layout.canvas.x, centerY, this.layout.canvas.x + this.layout.canvas.width, centerY);
 
     const verticalGuide = this.scene.add.text(centerX + 6, 8, `CENTER X ${centerX}`, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: '#ffffff',
       backgroundColor: 'rgba(0,0,0,0.72)',
       padding: { left: 4, right: 4, top: 3, bottom: 3 }
     }).setDepth(1001);
     const horizontalGuide = this.scene.add.text(8, centerY + 6, `CENTER Y ${centerY}`, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: '#ffffff',
       backgroundColor: 'rgba(0,0,0,0.72)',
@@ -116,7 +116,7 @@ export class LayoutDebugOverlay {
       `LEFT ${rect ? Math.round(rect.left) : 'N/A'} EXP ${Math.round(expectedLeft)} Δ ${rect ? Math.round(rect.left - expectedLeft) : 'N/A'}`,
       `TOP ${rect ? Math.round(rect.top) : 'N/A'} EXP ${Math.round(expectedTop)} Δ ${rect ? Math.round(rect.top - expectedTop) : 'N/A'}`
     ].join('\n'), {
-      fontFamily: 'monospace', fontSize: '9px', color: '#ffffff',
+      fontFamily: FONTS.GAME, fontSize: '9px', color: '#ffffff',
       backgroundColor: 'rgba(0,0,0,0.78)', padding: { left: 5, right: 5, top: 4, bottom: 4 }, lineSpacing: 1
     }).setDepth(1002);
     this.guideLabels.push(this.statsLabel);

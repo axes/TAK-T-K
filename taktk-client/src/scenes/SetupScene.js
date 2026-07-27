@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { COLORS, GAME_CONFIG, PLAYER_INFO, SETUP_ROWS, UNIT_ORDER } from '../config.js';
+import { COLORS, GAME_CONFIG, PLAYER_INFO, SETUP_ROWS, UNIT_ORDER, FONTS } from '../config.js';
 import { createGameState } from '../gameState.js';
 import { createUnitGlyph } from '../ui/unitGlyph.js';
 import { createDesktopTacticalLayout, centerOfCell, createDesktopChrome, createDesktopPanel } from '../ui/layout.js';
@@ -35,6 +35,7 @@ export class SetupScene extends Phaser.Scene {
     this.remoteSocketHandlers = null;
   }
 
+
   create() {
     this.layout = createDesktopTacticalLayout();
     this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
@@ -43,26 +44,41 @@ export class SetupScene extends Phaser.Scene {
       leftLines: ['Coloca tus unidades.', '', '• Selecciona una unidad disponible.', '', '• Haz clic en una celda válida.', '', '• Confirma el despliegue cuando corresponda.'],
       drawRightPanel: false
     });
-    createDesktopPanel(this, this.layout.rightSidebar, { borderColor: 0xff00e5, fillColor: 0x111118, alpha: 0.92 });
+    createDesktopPanel(this, this.layout.rightSidebar, {
+      borderColor: Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color,
+      fillColor: 0x111118,
+      alpha: 0.92
+    });
     this.boardGroup = this.add.group();
     this.unitGroup = this.add.group();
 
-    this.titleText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'PREPARACIÓN', {
-      fontFamily: 'monospace',
-      fontSize: '15px',
-      color: COLORS.text,
-      letterSpacing: 2
-    }).setOrigin(0, 0.5);
 
-    this.statusText = this.add.text(this.layout.headerCenter.x + 18, this.layout.headerCenter.y + 25, '', {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: COLORS.text,
+    this.titleText = this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 27, 'PREPARACIÓN', {
+      fontFamily: FONTS.GAME,
+      fontSize: '16px',
+      fontStyle: 'bold',
+      color: COLORS.textPrimary,
+      letterSpacing: 2
+    }).setOrigin(0, 0.5).setDepth(21);
+
+    this.turnText = this.add.text(this.layout.headerCenter.x + 120, this.layout.headerCenter.y + 36, '', {
+      fontFamily: FONTS.GAME,
+      fontSize: '13px',
+      color: COLORS.textPrimary,
+      fontStyle: 'bold',
       letterSpacing: 1
-    }).setOrigin(0, 0.5);
+    }).setOrigin(0.5, 0.5).setDepth(22);
+
+    this.playerText = this.add.text(this.layout.headerCenter.x + 368, this.layout.headerCenter.y + 36, '', {
+      fontFamily: FONTS.GAME,
+      fontSize: '13px',
+      fontStyle: 'bold',
+      color: COLORS.playerOne,
+      letterSpacing: 1
+    }).setOrigin(0, 0.5).setDepth(22);
 
     this.hintText = this.add.text(this.layout.headerCenter.x + 18, this.layout.headerCenter.y + 51, 'CLICK EN UNA CELDA VALIDA PARA COLOCAR LA UNIDAD ACTIVA', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       color: 'rgba(255,255,255,0.62)',
       letterSpacing: 1
@@ -70,10 +86,10 @@ export class SetupScene extends Phaser.Scene {
 
     const rightContent = this.layout.rightSidebar.content;
     this.setupPanelTitle = this.add.text(rightContent.x, rightContent.y, 'ESTADO DE DESPLIEGUE', {
-      fontFamily: 'monospace', fontSize: '11px', fontStyle: 'bold', color: '#ff00e5', letterSpacing: 1
+      fontFamily: FONTS.GAME, fontSize: '11px', fontStyle: 'bold', color: '#ff00e5', letterSpacing: 1
     }).setDepth(30);
     this.setupProgressText = this.add.text(rightContent.x, rightContent.y + 38, '', {
-      fontFamily: 'monospace', fontSize: '11px', color: 'rgba(255,255,255,0.72)', lineSpacing: 8,
+      fontFamily: FONTS.GAME, fontSize: '11px', color: 'rgba(255,255,255,0.72)', lineSpacing: 8,
       wordWrap: { width: rightContent.width }
     }).setDepth(30);
 
@@ -93,7 +109,7 @@ export class SetupScene extends Phaser.Scene {
   createExitControls() {
     const headerRight = this.layout.headerRight.x + this.layout.headerRight.width - this.layout.spacing.sidebarPadding;
     this.exitLink = this.add.text(headerRight, this.layout.header.y + this.layout.header.height / 2, 'TERMINAR PARTIDA', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: 'rgba(255,255,255,0.35)',
       letterSpacing: 2
@@ -125,13 +141,13 @@ export class SetupScene extends Phaser.Scene {
     const panel = this.add.rectangle(centerX, centerY, 420, 170, Phaser.Display.Color.HexStringToColor('#0d0d0f').color, 0.95)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.5)').color, 1);
     const title = this.add.text(centerX, centerY - 34, 'TERMINAR PARTIDA', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '16px',
-      color: COLORS.text,
+      color: COLORS.textPrimary,
       letterSpacing: 3
     }).setOrigin(0.5);
     const message = this.add.text(centerX, centerY - 2, '¿SEGURO QUE QUIERES VOLVER AL MENÚ PRINCIPAL?', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: 'rgba(255,255,255,0.6)',
       align: 'center',
@@ -139,12 +155,12 @@ export class SetupScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const confirmYesBg = this.add.rectangle(centerX - 60, centerY + 42, 110, 32, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
-      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9)
       .setInteractive({ useHandCursor: true });
     const confirmYesText = this.add.text(centerX - 60, centerY + 42, 'SI, SALIR', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
-      color: '#ff3366',
+      color: COLORS.grayText,
       letterSpacing: 1
     }).setOrigin(0.5);
 
@@ -152,14 +168,22 @@ export class SetupScene extends Phaser.Scene {
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.4)').color, 1)
       .setInteractive({ useHandCursor: true });
     const confirmNoText = this.add.text(centerX + 60, centerY + 42, 'NO', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: 'rgba(255,255,255,0.85)',
       letterSpacing: 1
     }).setOrigin(0.5);
 
-    confirmYesBg.on('pointerover', () => confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.12));
-    confirmYesBg.on('pointerout', () => confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ff3366').color, 0));
+    confirmYesBg.on('pointerover', () => {
+      confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.stateAttack).color, 0.12);
+      confirmYesBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.stateAttack).color, 1);
+      confirmYesText.setColor(COLORS.stateAttack);
+    });
+    confirmYesBg.on('pointerout', () => {
+      confirmYesBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+      confirmYesBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
+      confirmYesText.setColor(COLORS.grayText);
+    });
     confirmNoBg.on('pointerover', () => confirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0.08));
     confirmNoBg.on('pointerout', () => confirmNoBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#ffffff').color, 0));
 
@@ -197,17 +221,17 @@ export class SetupScene extends Phaser.Scene {
   drawBoard() {
     for (let y = 0; y < GAME_CONFIG.gridRows; y += 1) {
       for (let x = 0; x < GAME_CONFIG.gridCols; x += 1) {
-        const baseColor = (x + y) % 2 === 0 ? COLORS.cellA : COLORS.cellB;
+        const baseColor = (x + y) % 2 === 0 ? COLORS.boardCellA : COLORS.boardCellB;
         const { x: px, y: py } = centerOfCell(this.layout, x, y);
 
         const tile = this.add.rectangle(px, py, GAME_CONFIG.cellSize, GAME_CONFIG.cellSize, Phaser.Display.Color.HexStringToColor(baseColor).color, 1)
-          .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+          .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.boardGridBorder).color, 1);
         tile.setInteractive({ useHandCursor: true });
         tile.on('pointerover', () => {
-          tile.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.hover).color, 1);
+          tile.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.stateHover).color, 1);
         });
         tile.on('pointerout', () => {
-          tile.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 1);
+          tile.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.boardGridBorder).color, 1);
         });
         tile.on('pointerdown', () => this.handleCellClick(x, y));
 
@@ -324,10 +348,12 @@ export class SetupScene extends Phaser.Scene {
     const templateKey = UNIT_ORDER[this.unitToPlaceIndexByPlayer[owner]] || 'LISTO';
     if (this.isRemote) {
       const localName = this.playerId === 'p2' ? 'JUGADOR 2' : 'JUGADOR 1';
-      this.statusText.setText(`DESPLIEGUE REMOTO: ${localName} | UNIDAD ACTIVA: ${templateKey}`);
+      this.turnText.setText('DESPLIEGUE REMOTO');
+      this.playerText.setText(localName).setColor(PLAYER_INFO[this.playerId === 'p2' ? 2 : 1].color);
       this.setupProgressText.setText(`JUGADOR LOCAL: ${localName}\nUNIDAD ACTIVA: ${templateKey}\n\nCOLOCADAS: ${this.unitToPlaceIndexByPlayer[owner]}/${UNIT_ORDER.length}`);
     } else {
-      this.statusText.setText(`TURNO DE CONFIGURACION: ${PLAYER_INFO[owner].name} | UNIDAD ACTIVA: ${templateKey}`);
+      this.turnText.setText('TURNO DE CONFIGURACION');
+      this.playerText.setText(PLAYER_INFO[owner].name).setColor(PLAYER_INFO[owner].color);
       this.setupProgressText.setText(`JUGADOR ACTIVO: ${PLAYER_INFO[owner].name}\nUNIDAD ACTIVA: ${templateKey}\n\nCOLOCADAS: ${this.unitToPlaceIndexByPlayer[owner]}/${UNIT_ORDER.length}`);
     }
     this.refreshUnitMarkers();
@@ -356,14 +382,14 @@ export class SetupScene extends Phaser.Scene {
     const { controls } = this.layout.rightSidebar;
     const sidebarCenterX = controls.x + controls.width / 2;
     const sidebarBottomY = controls.y + 38;
-    this.remoteConfirmBg = this.add.rectangle(sidebarCenterX, sidebarBottomY, 180, 40, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
-      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0.45)
+    this.remoteConfirmBg = this.add.rectangle(sidebarCenterX, sidebarBottomY, 180, 40, Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
-    this.remoteConfirmText = this.add.text(sidebarCenterX, sidebarBottomY, 'CONFIRMAR', {
-      fontFamily: 'monospace',
+    this.remoteConfirmText = this.add.text(sidebarCenterX, sidebarBottomY, 'FINALIZAR DESPLIEGUE', {
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
-      color: 'rgba(0,245,255,0.45)',
+      color: COLORS.textPrimary,
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(41);
 
@@ -371,10 +397,14 @@ export class SetupScene extends Phaser.Scene {
       if (!this.canSubmitRemoteSetup()) {
         return;
       }
-      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0.12);
+      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.stateHover).color, 0.12);
+      this.remoteConfirmBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.stateHoverBorder).color, 1);
+      this.remoteConfirmText.setColor(COLORS.stateHoverBorder);
     });
     this.remoteConfirmBg.on('pointerout', () => {
-      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#00f5ff').color, 0);
+      this.remoteConfirmBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+      this.remoteConfirmBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
+      this.remoteConfirmText.setColor(COLORS.textPrimary);
     });
     this.remoteConfirmBg.on('pointerdown', () => this.submitRemoteSetup());
     this.updateRemoteConfirmState();
@@ -390,8 +420,8 @@ export class SetupScene extends Phaser.Scene {
     }
 
     const enabled = this.canSubmitRemoteSetup();
-    this.remoteConfirmBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#00f5ff').color, enabled ? 0.9 : 0.35);
-    this.remoteConfirmText.setColor(enabled ? '#00f5ff' : 'rgba(0,245,255,0.35)');
+    this.remoteConfirmBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, enabled ? 0.9 : 0.35);
+    this.remoteConfirmText.setColor(enabled ? COLORS.textPrimary : COLORS.grayTextDim);
   }
 
   buildRemotePlacements() {

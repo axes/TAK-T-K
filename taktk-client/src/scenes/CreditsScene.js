@@ -1,9 +1,9 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { GAME_CONFIG } from '../config.js';
+import { GAME_CONFIG, FONTS } from '../config.js';
 
 function createBackButton(scene) {
   const back = scene.add.text(60, GAME_CONFIG.height - 40, '← VOLVER', {
-    fontFamily: 'monospace',
+    fontFamily: FONTS.GAME,
     fontSize: '10px',
     color: 'rgba(255,255,255,0.3)',
     letterSpacing: 2
@@ -24,14 +24,14 @@ export class CreditsScene extends Phaser.Scene {
 
     const centerX = GAME_CONFIG.width / 2;
     this.add.text(centerX, 120, 'CRÉDITOS', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '14px',
       color: 'rgba(255, 255, 255, 0.5)',
       letterSpacing: 4
     }).setOrigin(0.5);
 
     this.add.text(centerX, 200, 'CONTENIDO PRÓXIMAMENTE', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       color: 'rgba(255,255,255,0.25)',
       align: 'center'
@@ -45,7 +45,7 @@ export class CreditsScene extends Phaser.Scene {
 
     for (let i = 0; i < lines.length; i += 1) {
       this.add.text(centerX, 284 + i * 28, lines[i], {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '11px',
         color: 'rgba(255,255,255,0.4)',
         letterSpacing: 1

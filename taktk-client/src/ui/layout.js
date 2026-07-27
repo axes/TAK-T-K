@@ -1,4 +1,4 @@
-import { GAME_CONFIG, TOUCH_TARGETS, COLORS } from '../config.js';
+import { GAME_CONFIG, TOUCH_TARGETS, COLORS, FONTS, FOOTER_TEXT, FOOTER_URL } from '../config.js';
 
 export const DESKTOP_LAYOUT = Object.freeze({
   outerMargin: 24,
@@ -71,9 +71,24 @@ export function createDesktopPanel(scene, region, { borderColor = 0x00f5ff, fill
 }
 
 export function createDesktopFooter(scene, layout, depth = 11) {
-  return scene.add.text(layout.footer.x + 10, layout.footer.y + layout.footer.height / 2, 'TAK-T-K · VERSION TBD · COPYLEFT · AUTOR TBD · PROYECTO TBD', {
-    fontFamily: 'monospace', fontSize: '8px', color: 'rgba(255,255,255,0.38)', letterSpacing: 1
-  }).setOrigin(0, 0.5).setDepth(depth);
+  const footerText = scene.add.text(
+    layout.footer.x + layout.footer.width / 2,
+    (layout.footer.y + layout.footer.height / 2)-2,
+    FOOTER_TEXT,
+    {
+      fontFamily: FONTS.GAME,
+      fontSize: '10px',
+      color: COLORS.textMuted,
+      letterSpacing: 1,
+      align: 'center'
+    }
+  ).setOrigin(0.5, 0.5).setDepth(depth);
+
+  footerText
+    .setInteractive({ useHandCursor: true })
+    .on('pointerdown', () => globalThis.open(FOOTER_URL, '_blank', 'noopener,noreferrer'));
+
+  return footerText;
 }
 
 export function createDesktopChrome(scene, layout, { leftTitle = 'REGISTRO DE ACCIONES', leftLines = [], drawLeftPanel = true, drawRightPanel = true, showLeftContent = true } = {}) {
@@ -81,8 +96,8 @@ export function createDesktopChrome(scene, layout, { leftTitle = 'REGISTRO DE AC
   const borderColor = 0x00f5ff;
   if (drawLeftPanel) createDesktopPanel(scene, layout.leftSidebar, { fillColor: panelColor, borderColor });
   if (drawRightPanel) createDesktopPanel(scene, layout.rightSidebar, { fillColor: panelColor, borderColor });
-  const title = showLeftContent ? scene.add.text(layout.leftSidebar.content.x, layout.leftSidebar.content.y, leftTitle, { fontFamily: 'monospace', fontSize: '11px', fontStyle: 'bold', color: COLORS.player1, letterSpacing: 1 }).setDepth(11) : null;
-  const lines = showLeftContent ? scene.add.text(layout.leftSidebar.content.x, layout.leftSidebar.content.y + 42, leftLines.join('\n'), { fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.48)', lineSpacing: 10, wordWrap: { width: layout.leftSidebar.content.width } }).setDepth(11) : null;
+  const title = showLeftContent ? scene.add.text(layout.leftSidebar.content.x, layout.leftSidebar.content.y, leftTitle, { fontFamily: FONTS.GAME, fontSize: '11px', fontStyle: 'bold', color: COLORS.playerOne, letterSpacing: 1 }).setDepth(11) : null;
+  const lines = showLeftContent ? scene.add.text(layout.leftSidebar.content.x, layout.leftSidebar.content.y + 42, leftLines.join('\n'), { fontFamily: FONTS.GAME, fontSize: '10px', color: 'rgba(255,255,255,0.48)', lineSpacing: 10, wordWrap: { width: layout.leftSidebar.content.width } }).setDepth(11) : null;
   const footerText = createDesktopFooter(scene, layout);
   return { title, lines, footerText };
 }

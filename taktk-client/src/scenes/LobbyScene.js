@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { GAME_CONFIG, SERVER_URL } from '../config.js';
+import { GAME_CONFIG, SERVER_URL, FONTS } from '../config.js';
 import { SocketManager } from '../SocketManager.js';
 
 function colorToNumber(value) {
@@ -36,7 +36,7 @@ export class LobbyScene extends Phaser.Scene {
 
   createBaseUI() {
     this.titleText = this.add.text(this.canvasCenterX, 140, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '42px',
       fontStyle: 'bold',
       color: '#00f5ff',
@@ -45,7 +45,7 @@ export class LobbyScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.subtitleText = this.add.text(this.canvasCenterX, 180, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '12px',
       color: 'rgba(255,255,255,0.45)',
       align: 'center',
@@ -53,7 +53,7 @@ export class LobbyScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.infoText = this.add.text(this.canvasCenterX, 240, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '16px',
       color: '#ffffff',
       align: 'center',
@@ -61,7 +61,7 @@ export class LobbyScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.secondaryInfoText = this.add.text(this.canvasCenterX, 290, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '12px',
       color: 'rgba(255,255,255,0.65)',
       align: 'center',
@@ -69,7 +69,7 @@ export class LobbyScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.errorText = this.add.text(this.canvasCenterX, 360, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       color: 'rgba(255,51,102,0.8)',
       align: 'center',
@@ -82,14 +82,14 @@ export class LobbyScene extends Phaser.Scene {
       .setVisible(false);
 
     this.waitingText = this.add.text(this.canvasCenterX, 420, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '13px',
       color: 'rgba(0,245,255,0.5)',
       letterSpacing: 2
     }).setOrigin(0.5);
 
     this.codeText = this.add.text(this.canvasCenterX, 280, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '64px',
       fontStyle: 'bold',
       color: '#00f5ff',
@@ -108,7 +108,7 @@ export class LobbyScene extends Phaser.Scene {
       .setStrokeStyle(1, border, 1)
       .setInteractive({ useHandCursor: true });
     const text = this.add.text(x, y, label, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       fontStyle: 'bold',
       color: borderColor,
@@ -124,7 +124,7 @@ export class LobbyScene extends Phaser.Scene {
 
   createTextLink(x, y, label, onClick) {
     const text = this.add.text(x, y, label, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       color: 'rgba(255,255,255,0.6)',
       letterSpacing: 1
@@ -148,7 +148,7 @@ export class LobbyScene extends Phaser.Scene {
     input.style.border = '1px solid rgba(0,245,255,0.3)';
     input.style.background = 'rgba(0,0,0,0.5)';
     input.style.color = '#00f5ff';
-    input.style.fontFamily = 'monospace';
+    input.style.fontFamily = FONTS.GAME;
     input.style.fontSize = '16px';
     input.style.textTransform = 'uppercase';
     input.style.textAlign = 'center';

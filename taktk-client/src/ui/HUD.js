@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { COLORS, PLAYER_INFO } from '../config.js';
+import { COLORS, PLAYER_INFO, FONTS } from '../config.js';
 import { createDesktopTacticalLayout } from './layout.js';
 
 function rgba(hex, alpha) {
@@ -17,16 +17,16 @@ function createActionRow(scene, x, y, width, height = 40) {
     .setInteractive({ useHandCursor: true });
 
   const nameText = scene.add.text(x + 10, y + height / 2, '', {
-    fontFamily: 'monospace',
+    fontFamily: FONTS.GAME,
     fontSize: '10px',
-    color: COLORS.player1,
+    color: COLORS.playerOne,
     fontStyle: 'bold',
     letterSpacing: 1
   });
 
   const costText = scene.add.text(x + width - 10, y + 8, '', {
-    fontFamily: 'monospace',
-    fontSize: '9px',
+    fontFamily: FONTS.GAME,
+    fontSize: '12px',
     color: 'rgba(0, 245, 255, 0.6)',
     letterSpacing: 1
   }).setOrigin(1, 0.5);
@@ -50,7 +50,7 @@ function createActionRow(scene, x, y, width, height = 40) {
       if (enabled) {
         this.container.setAlpha(1);
         this.nameText.setText(this.baseName);
-        this.nameText.setColor(COLORS.player1);
+        this.nameText.setColor(COLORS.playerOne);
         this.costText.setText(this.costLabel);
         this.costText.setColor('rgba(0, 245, 255, 0.6)');
         this.background.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0, 245, 255, 0.2)').color, 1);
@@ -132,34 +132,34 @@ export class HUD {
     this.verticalSeparator = scene.add.rectangle(sidebarSeparatorX, sidebarCenterY, 1, rightSidebar.height, Phaser.Display.Color.HexStringToColor('rgba(255, 0, 229, 0.3)').color, 1).setDepth(21);
 
     this.turnText = scene.add.text(headerCenterRegion.x + 120, headerCenterY, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '13px',
-      color: COLORS.player1,
+      color: COLORS.textPrimary,
       fontStyle: 'bold',
       letterSpacing: 1
     }).setOrigin(0.5, 0.5).setDepth(22);
 
     this.headerSep1 = scene.add.rectangle(headerCenterRegion.x + 240, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
 
-    this.playerDot = scene.add.circle(headerCenterRegion.x + 350, headerCenterY, 4, Phaser.Display.Color.HexStringToColor(COLORS.player1).color, 1).setDepth(22);
+    this.playerDot = scene.add.circle(headerCenterRegion.x + 350, headerCenterY, 4, Phaser.Display.Color.HexStringToColor(COLORS.playerOne).color, 1).setDepth(22);
     this.playerText = scene.add.text(headerCenterRegion.x + 368, headerCenterY, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '13px',
       fontStyle: 'bold',
-      color: COLORS.player1,
+      color: COLORS.playerOne,
       letterSpacing: 1
     }).setOrigin(0, 0.5).setDepth(22);
 
     this.headerSep2 = scene.add.rectangle(headerCenterRegion.x + 500, headerCenterY, 1, 20, Phaser.Display.Color.HexStringToColor('rgba(0,245,255,0.2)').color, 1).setDepth(22);
     this.unitsAliveText = scene.add.text(headerCenterRegion.x + 600, headerCenterY, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '13px',
       color: 'rgba(255,255,255,0.5)',
       letterSpacing: 1
     }).setOrigin(0.5, 0.5).setDepth(22);
 
     this.emptyPromptText = scene.add.text(sidebarCenterX, unitInfoCenterY + 8, 'SELECCIONA\nUNA UNIDAD', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '12px',
       color: 'rgba(255,255,255,0.2)',
       align: 'center',
@@ -167,24 +167,24 @@ export class HUD {
     }).setOrigin(0.5).setDepth(23);
 
     this.unitText = scene.add.text(unitInfo.x, unitInfo.y + 4, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '14px',
       fontStyle: 'bold',
-      color: COLORS.player1,
+      color: COLORS.playerOne,
       letterSpacing: 2
     }).setDepth(23);
 
     this.unitSubText = scene.add.text(unitInfo.x, unitInfo.y + 24, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '9px',
-      color: rgba(COLORS.player1, 0.5),
+      color: rgba(COLORS.playerOne, 0.5),
       letterSpacing: 1
     }).setDepth(23);
 
     this.sepInfoTop = scene.add.rectangle(unitInfo.x + unitInfo.width / 2, unitInfo.y + 40, unitInfo.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.1)').color, 1).setDepth(23);
 
     this.hpLabel = scene.add.text(unitInfo.x, unitInfo.y + 56, 'HP', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '9px',
       color: 'rgba(255,255,255,0.4)',
       letterSpacing: 1
@@ -194,13 +194,13 @@ export class HUD {
     this.hpBarBack = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, hpBarWidth, 6, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.1)').color, 1).setOrigin(0, 0.5).setDepth(23);
     this.hpBarFill = scene.add.rectangle(unitInfo.x, unitInfo.y + 68, hpBarWidth, 6, Phaser.Display.Color.HexStringToColor('#39ff14').color, 1).setOrigin(0, 0.5).setDepth(24);
     this.hpValueText = scene.add.text(unitInfo.x + unitInfo.width, unitInfo.y + 68, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: '#39ff14'
     }).setOrigin(1, 0.5).setDepth(24);
 
     this.apLabel = scene.add.text(unitInfo.x, unitInfo.y + 88, 'PA', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '9px',
       color: 'rgba(255,255,255,0.4)',
       letterSpacing: 1
@@ -209,13 +209,13 @@ export class HUD {
     this.apPips = [];
     for (let i = 0; i < 3; i += 1) {
       this.apPips.push(scene.add.text(unitInfo.x + i * 20, unitInfo.y + 106, '◇', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.GAME,
         fontSize: '14px',
         color: 'rgba(0,245,255,0.25)'
       }).setDepth(23));
     }
     this.apValueText = scene.add.text(unitInfo.x + 68, unitInfo.y + 106, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: 'rgba(255,255,255,0.4)'
     }).setDepth(23);
@@ -223,7 +223,7 @@ export class HUD {
     this.sepInfoBottom = scene.add.rectangle(unitInfo.x + unitInfo.width / 2, unitInfo.y + unitInfo.height - 1, unitInfo.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.08)').color, 1).setDepth(23);
 
     this.actionsLabel = scene.add.text(actions.x, actions.y, 'ACCIONES', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '9px',
       color: 'rgba(255,255,255,0.4)',
       letterSpacing: 1
@@ -242,7 +242,7 @@ export class HUD {
     this.actionRows.move.setContent('MOVER', '1-2 PA');
 
     this.descriptionText = scene.add.text(description.x, description.y + 6, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: 'rgba(255,255,255,0.25)',
       lineSpacing: 6,
@@ -250,7 +250,7 @@ export class HUD {
     }).setDepth(23);
 
     this.noActionsText = scene.add.text(description.x + description.width / 2, description.y + description.height - 20, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '10px',
       color: '#ff3366',
       letterSpacing: 1
@@ -258,50 +258,52 @@ export class HUD {
 
     this.endTurnSeparator = scene.add.rectangle(controls.x + controls.width / 2, controls.y, controls.width, 1, Phaser.Display.Color.HexStringToColor('rgba(255,255,255,0.08)').color, 1).setDepth(23);
 
-    this.endTurnColor = COLORS.player1;
-    this.endTurnBg = scene.add.rectangle(endTurn.x + endTurn.width / 2, endTurn.y + endTurn.height / 2, endTurn.width, endTurn.height, Phaser.Display.Color.HexStringToColor('#000000').color, 0)
-      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('rgba(0, 245, 255, 0.4)').color, 1)
+    this.endTurnColor = COLORS.playerOne;
+    this.endTurnBg = scene.add.rectangle(endTurn.x + endTurn.width / 2, endTurn.y + endTurn.height / 2, endTurn.width, endTurn.height, Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9)
       .setDepth(24)
       .setInteractive({ useHandCursor: true });
 
     this.endTurnText = scene.add.text(endTurn.x + endTurn.width / 2, endTurn.y + endTurn.height / 2, 'FINALIZAR TURNO', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '11px',
       fontStyle: 'bold',
-      color: COLORS.player1,
+      color: COLORS.textPrimary,
       letterSpacing: 2
     }).setOrigin(0.5).setDepth(25);
 
     this.endTurnBg.on('pointerover', () => {
       this.endTurnBg.setFillStyle(Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0.08);
       this.endTurnBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0.7);
+      this.endTurnText.setColor(this.endTurnColor);
     });
 
     this.endTurnBg.on('pointerout', () => {
       if (this.confirmationMode === 'endTurn') {
         return;
       }
-      this.endTurnBg.setFillStyle(Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0);
-      this.endTurnBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(this.endTurnColor).color, 0.4);
+      this.endTurnBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+      this.endTurnBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
+      this.endTurnText.setColor(COLORS.textPrimary);
     });
 
     this.confirmationMode = null;
     this.confirmationTimer = null;
     this.confirmationText = scene.add.text(controls.x + controls.width / 2, controls.y + 2, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.GAME,
       fontSize: '12px',
       fontStyle: 'bold',
       color: '#ff3366',
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(26).setVisible(false);
 
-    this.surrenderBg = scene.add.rectangle(surrenderButton.x + surrenderButton.width / 2, surrenderButton.y + surrenderButton.height / 2, surrenderButton.width, surrenderButton.height, Phaser.Display.Color.HexStringToColor('#26070d').color, 1)
-      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9)
+    this.surrenderBg = scene.add.rectangle(surrenderButton.x + surrenderButton.width / 2, surrenderButton.y + surrenderButton.height / 2, surrenderButton.width, surrenderButton.height, Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9)
       .setDepth(24)
       .setInteractive({ useHandCursor: true });
     this.surrenderText = this.surrenderBg;
     this.surrenderIcon = scene.add.graphics().setDepth(25);
-    this.drawSurrenderIcon('#ff3366', 0.95);
+    this.drawSurrenderIcon(COLORS.grayTextDim, 0.95);
 
     this.endTurnBg.on('pointerdown', () => this.handleEndTurnClick());
     this.surrenderBg.on('pointerover', () => {
@@ -313,9 +315,9 @@ export class HUD {
     });
     this.surrenderBg.on('pointerout', () => {
       if (this.confirmationMode !== 'surrender') {
-        this.surrenderBg.setFillStyle(Phaser.Display.Color.HexStringToColor('#26070d').color, 1);
-        this.surrenderBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9);
-        this.drawSurrenderIcon('#ff3366', 0.95);
+        this.surrenderBg.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+        this.surrenderBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
+        this.drawSurrenderIcon(COLORS.grayTextDim, 0.95);
       }
     });
     this.surrenderBg.on('pointerdown', () => this.handleSurrenderClick());
@@ -412,12 +414,13 @@ export class HUD {
     this.confirmationMode = null;
     this.confirmationText?.setVisible(false);
     this.endTurnText?.setText('FINALIZAR TURNO');
-    this.endTurnBg?.setFillStyle(Phaser.Display.Color.HexStringToColor('#000000').color, 0);
-    this.endTurnBg?.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(this.endTurnColor || COLORS.player1).color, 0.4);
-    this.surrenderBg?.setFillStyle(Phaser.Display.Color.HexStringToColor('#26070d').color, 1);
-    this.surrenderBg?.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#ff3366').color, 0.9);
+    this.endTurnText?.setColor(COLORS.textPrimary);
+    this.endTurnBg?.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+    this.endTurnBg?.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
+    this.surrenderBg?.setFillStyle(Phaser.Display.Color.HexStringToColor(COLORS.buttonBase).color, 1);
+    this.surrenderBg?.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
     if (this.surrenderIcon) {
-      this.drawSurrenderIcon('#ff3366', 0.95);
+      this.drawSurrenderIcon(COLORS.grayTextDim, 0.95);
     }
   }
 
@@ -489,8 +492,8 @@ export class HUD {
     this.unitsAliveText.setText(`${p1Alive} VS ${p2Alive}`);
 
     this.endTurnColor = currentPlayerInfo.color;
-    this.endTurnText.setColor(currentPlayerInfo.color);
-    this.endTurnBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(currentPlayerInfo.color).color, 0.4);
+    this.endTurnText.setColor(COLORS.textPrimary);
+    this.endTurnBg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.grayBorder).color, 0.9);
 
     const hasSelection = Boolean(selectedUnit);
     this.emptyPromptText.setVisible(!hasSelection);
