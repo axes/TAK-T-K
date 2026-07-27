@@ -54,6 +54,72 @@ export class MainScene extends Phaser.Scene {
       letterSpacing: 6
     }).setOrigin(0.5).setAlpha(0);
 
+    // Glow neón permanente y sutil sobre el título
+    const titleGlow = title.preFX.addGlow(colorToNumber(COLORS.playerOne), 2, 0, false, 0.1, 10);
+
+    // Capas de glitch cromático (duplicados del texto, ocultos por defecto)
+    const titleGlitchR = this.add.text(mainCenterX, 156, 'TAK-T-K', {
+      fontFamily: FONTS.TITLE, fontSize: '56px', fontStyle: 'bold',
+      color: '#ff2a5f', align: 'center', letterSpacing: 6
+    }).setOrigin(0.5).setAlpha(0).setDepth(title.depth + 1);
+
+    const titleGlitchB = this.add.text(mainCenterX, 156, 'TAK-T-K', {
+      fontFamily: FONTS.TITLE, fontSize: '56px', fontStyle: 'bold',
+      color: '#00f5ff', align: 'center', letterSpacing: 6
+    }).setOrigin(0.5).setAlpha(0).setDepth(title.depth + 2);
+
+    const triggerTitleGlitch = () => {
+      const intensity = Phaser.Math.FloatBetween(0.4, 1); // varía la fuerza cada vez
+      const offset = 2 + intensity * 3;
+
+      this.tweens.killTweensOf([titleGlitchR, titleGlitchB, title]);
+      titleGlitchR.setPosition(mainCenterX - offset, 156);
+      titleGlitchB.setPosition(mainCenterX + offset, 156);
+
+      this.tweens.chain({
+        targets: titleGlitchR,
+        tweens: [
+          { alpha: 0.5 * intensity, duration: 30 },
+          { alpha: 0, duration: 40 },
+          { alpha: 0.35 * intensity, duration: 25 },
+          { alpha: 0, duration: 50 }
+        ]
+      });
+      this.tweens.chain({
+        targets: titleGlitchB,
+        tweens: [
+          { alpha: 0.5 * intensity, duration: 25, delay: 15 },
+          { alpha: 0, duration: 35 },
+          { alpha: 0.3 * intensity, duration: 20 },
+          { alpha: 0, duration: 50 }
+        ]
+      });
+
+      // Flash breve del título base y el glow, proporcional a la intensidad
+      this.tweens.add({
+        targets: title,
+        alpha: 1 - 0.15 * intensity,
+        duration: 100,
+        yoyo: true,
+        repeat: 2
+      });
+      this.tweens.add({
+        targets: titleGlow,
+        outerStrength: 1 + intensity * 3,
+        duration: 80,
+        yoyo: true
+      });
+    };
+
+    const scheduleNextGlitch = () => {
+      this.time.delayedCall(Phaser.Math.Between(1000, 5000), () => {
+        triggerTitleGlitch();
+        scheduleNextGlitch();
+      });
+    };
+    scheduleNextGlitch();
+
+
     // Subtítulo
     const slogan = this.add.text(mainCenterX, 204, 'JUEGO TÁCTICO POR TURNOS', {
       fontFamily: FONTS.TITLE,
