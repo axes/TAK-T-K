@@ -1,35 +1,37 @@
 <!doctype html>
 <html lang="es">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tactical Neon</title>
+    <title>TAK-T-K - Juego </title>
+
+    <!-- Google Fonts: Orbitron, Rajdhani y Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #0d0d0f;
-        --text: #ffffff;
+        --bg-color: #0a0b10;
       }
 
-      html {
-        width: 100%;
-        min-height: 100%;
-        margin: 0;
-        padding: 0;
-        background: #08080a;
+      * {
         box-sizing: border-box;
       }
 
+      html,
       body {
         width: 100%;
-        min-height: 100vh;
+        height: 100%;
         margin: 0;
         padding: 0;
-        background: #08080a;
-        color: var(--text);
-        font-family: monospace;
-        overflow: auto;
-        box-sizing: border-box;
+        background-color: var(--bg-color);
+        /* Evita scrollbars involuntarias */
+        overflow: hidden;
+        /* Previene comportamiento de refresco al arrastrar en móviles */
+        overscroll-behavior: none;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
 
       #game-container {
@@ -54,10 +56,25 @@
         padding: 0;
         transform: none;
       }
+
+      /* Helper para forzar precarga de fuentes antes del renderizado de Phaser */
+      .font-preload {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        visibility: hidden;
+      }
     </style>
   </head>
+
   <body>
+    <!-- Precargas de fuentes para Phaser -->
+    <div class="font-preload" style="font-family: 'Orbitron'; font-weight: 900;">.</div>
+    <div class="font-preload" style="font-family: 'Rajdhani'; font-weight: 600;">.</div>
+    <div class="font-preload" style="font-family: 'Plus Jakarta Sans'; font-weight: 500;">.</div>
+
     <div id="game-container"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
+
 </html>

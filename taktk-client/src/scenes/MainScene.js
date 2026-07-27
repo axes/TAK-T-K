@@ -1,7 +1,7 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 import { createDesktopTacticalLayout, createDesktopChrome } from '../ui/layout.js';
 import { LayoutDebugOverlay } from '../ui/LayoutDebugOverlay.js';
-import { GAME_CONFIG, COLORS } from '../config.js';
+import { GAME_CONFIG, COLORS, FONTS } from '../config.js';
 
 function colorToNumber(value) {
   return Phaser.Display.Color.HexStringToColor(value).color;
@@ -35,53 +35,42 @@ export class MainScene extends Phaser.Scene {
     this.layout.coverNavigation = navigationRegion;
 
     this.layoutDebugOverlay = new LayoutDebugOverlay(this, this.layout);
-    const desktopChrome = createDesktopChrome(this, this.layout, {
+    createDesktopChrome(this, this.layout, {
       drawLeftPanel: false,
       drawRightPanel: false,
       showLeftContent: false
     });
-    desktopChrome.footerText.setText('TAK-T-K · 0.4.0-dev · COPYLEFT · DESARROLLO ACTIVO · CLIENTE PHASER');
 
-    this.add.text(this.layout.headerLeft.x + 18, this.layout.headerLeft.y + 36, 'TAK-T-K', {
-      fontFamily: 'monospace', fontSize: '16px', fontStyle: 'bold', color: COLORS.text, letterSpacing: 2
-    }).setOrigin(0, 0.5).setDepth(12);
-    this.add.text(this.layout.headerCenter.x + this.layout.headerCenter.width / 2, this.layout.headerCenter.y + 36, 'MUEVE · ATACA · DOMINA', {
-      fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.45)', letterSpacing: 2
-    }).setOrigin(0.5).setDepth(12);
 
+
+
+    // Titulo principal
     const title = this.add.text(mainCenterX, 156, 'TAK-T-K', {
-      fontFamily: 'monospace',
-      fontSize: '38px',
+      fontFamily: FONTS.TITLE,
+      fontSize: '56px',
       fontStyle: 'bold',
-      color: COLORS.player1,
+      color: COLORS.playerOne,
       align: 'center',
       letterSpacing: 6
     }).setOrigin(0.5).setAlpha(0);
 
-    const slogan = this.add.text(mainCenterX, 204, 'MUEVE. ATACA. DOMINA.', {
-      fontFamily: 'monospace',
+    // Subtítulo
+    const slogan = this.add.text(mainCenterX, 204, 'JUEGO TÁCTICO POR TURNOS', {
+      fontFamily: FONTS.TITLE,
       fontSize: '14px',
-      color: COLORS.text,
+      color: COLORS.textPrimary,
       align: 'center',
       letterSpacing: 3
     }).setOrigin(0.5).setAlpha(0);
 
-    const description = this.add.text(mainCenterX, 242, 'UN JUEGO TÁCTICO POR TURNOS', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: 'rgba(255,255,255,0.45)',
-      align: 'center',
-      letterSpacing: 2
-    }).setOrigin(0.5).setAlpha(0);
-
-    const separator = this.add.rectangle(mainCenterX, 276, 420, 1, colorToNumber('rgba(0,245,255,0.25)'), 1).setAlpha(0);
+    const separator = this.add.rectangle(mainCenterX, 260, 300, 1, colorToNumber(COLORS.grayBorder), 1).setAlpha(0);
 
     const modeLabel = this.add.text(mainCenterX, 310, 'SELECCIONAR MODO', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
-      color: 'rgba(255,255,255,0.5)',
+      fontFamily: FONTS.GAME,
+      fontSize: '16px',
+      color: COLORS.textMuted,
       align: 'center',
-      letterSpacing: 2
+      letterSpacing: 6
     }).setOrigin(0.5).setAlpha(0);
 
     const cards = [
@@ -90,12 +79,12 @@ export class MainScene extends Phaser.Scene {
         y: cardRegion.y,
         title: 'HOT-SEAT',
         subtitle: 'DOS JUGADORES\nEN ESTA PANTALLA',
-        normalBorder: 'rgba(0,245,255,0.3)',
-        hoverBorder: 'rgba(0,245,255,0.8)',
-        pressedBorder: 'rgba(0,245,255,1)',
-        hoverFill: 'rgba(0,245,255,0.06)',
-        pressedFill: 'rgba(0,245,255,0.12)',
-        titleColor: COLORS.player1,
+        normalBorder: COLORS.grayBorder,
+        hoverBorder: COLORS.stateHover,
+        pressedBorder: COLORS.stateHover,
+        hoverFill: COLORS.black,
+        pressedFill: COLORS.black,
+        titleColor: COLORS.textPrimary,
         onClick: () => this.scene.start('SetupScene', { mode: 'pvp' })
       }),
       this.createModeCard({
@@ -103,12 +92,12 @@ export class MainScene extends Phaser.Scene {
         y: cardRegion.y,
         title: 'VS IA',
         subtitle: 'JUEGA CONTRA\nLA COMPUTADORA',
-        normalBorder: 'rgba(255,0,229,0.3)',
-        hoverBorder: 'rgba(255,0,229,0.8)',
-        pressedBorder: 'rgba(255,0,229,1)',
-        hoverFill: 'rgba(255,0,229,0.06)',
-        pressedFill: 'rgba(255,0,229,0.12)',
-        titleColor: COLORS.player2,
+        normalBorder: COLORS.grayBorder,
+        hoverBorder: COLORS.stateHover,
+        pressedBorder: COLORS.stateHover,
+        hoverFill: COLORS.black,
+        pressedFill: COLORS.black,
+        titleColor: COLORS.textPrimary,
         onClick: () => this.scene.start('SetupScene', { mode: 'pve' })
       }),
       this.createModeCard({
@@ -116,12 +105,12 @@ export class MainScene extends Phaser.Scene {
         y: cardRegion.y,
         title: 'REMOTO',
         subtitle: 'CREA O ÚNETE\nA UNA SALA',
-        normalBorder: 'rgba(255,170,0,0.35)',
-        hoverBorder: 'rgba(255,170,0,0.85)',
-        pressedBorder: 'rgba(255,170,0,1)',
-        hoverFill: 'rgba(255,170,0,0.08)',
-        pressedFill: 'rgba(255,170,0,0.14)',
-        titleColor: '#ffaa00',
+        normalBorder: COLORS.grayBorder,
+        hoverBorder: COLORS.stateHover,
+        pressedBorder: COLORS.stateHover,
+        hoverFill: COLORS.black,
+        pressedFill: COLORS.black,
+        titleColor: COLORS.textPrimary,
         onClick: () => this.scene.start('LobbyScene')
       })
     ];
@@ -138,53 +127,121 @@ export class MainScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: title,
-      alpha: 1,
-      delay: 0,
-      duration: 800,
-      onComplete: () => {
-        this.tweens.add({ targets: title, alpha: 0.85, duration: 2000, yoyo: true, repeat: -1 });
-      }
+      alpha: 1, delay: 0, duration: 800
     });
-    this.tweens.add({ targets: [slogan, description], alpha: 1, delay: 350, duration: 500 });
-    this.tweens.add({ targets: [separator, modeLabel, ...cardTargets], alpha: 1, delay: 700, duration: 500 });
-    this.tweens.add({ targets: secondaryButtons.map((button) => button.text), alpha: 1, delay: 950, duration: 400 });
+    this.tweens.add({
+      targets: [slogan],
+      alpha: 1, delay: 350, duration: 500
+    });
+    this.tweens.add({
+      targets: [separator, modeLabel, ...cardTargets],
+      alpha: 1, delay: 700, duration: 500
+    });
+    this.tweens.add({
+      targets: secondaryButtons.map((button) => button.text),
+      alpha: 1, delay: 950, duration: 400
+    });
   }
 
   createModeCard(config) {
     const width = 240;
     const height = 138;
-    const radius = 4;
+    const radius = 6;
     const centerX = config.x + width / 2;
     const graphics = this.add.graphics();
     const title = this.add.text(centerX, config.y + 44, config.title, {
-      fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold', color: config.titleColor,
+      fontFamily: FONTS.TITLE, fontSize: '16px', fontStyle: 'bold', color: config.titleColor,
       align: 'center', letterSpacing: 2
     }).setOrigin(0.5);
     const subtitle = this.add.text(centerX, config.y + 83, config.subtitle, {
-      fontFamily: 'monospace', fontSize: '9px', color: 'rgba(255,255,255,0.38)',
+      fontFamily: FONTS.GAME, fontSize: '12px', color: 'rgba(255,255,255,0.38)',
       align: 'center', lineSpacing: 4, letterSpacing: 1
     }).setOrigin(0.5);
+
+
+    const { layers: cornerLayers, glitchIn, glitchOut } = this.createChromaticCorners(config.x, config.y, width, height);
 
     const drawState = (borderColor, fillColor = null) => {
       drawRoundedCard(graphics, config.x, config.y, width, height, radius, borderColor, fillColor);
     };
     drawState(config.normalBorder);
 
+    // Efectos
     const fadeTargets = [graphics, title, subtitle];
+
     if (!config.disabled) {
       const hitArea = this.add.zone(centerX, config.y + height / 2, width, height);
       hitArea.setInteractive({ useHandCursor: true });
-      hitArea.on('pointerover', () => drawState(config.hoverBorder, config.hoverFill));
-      hitArea.on('pointerout', () => drawState(config.normalBorder));
+      hitArea.on('pointerover', () => {
+        drawState(config.hoverBorder, config.hoverFill);
+        glitchIn();
+      });
+      hitArea.on('pointerout', () => {
+        drawState(config.normalBorder);
+        glitchOut();
+      });
       hitArea.on('pointerdown', () => {
         drawState(config.pressedBorder, config.pressedFill);
-        config.onClick?.();
+        this.time.delayedCall(120, () => config.onClick?.());
       });
       fadeTargets.push(hitArea);
       hitArea.setAlpha(0);
     }
 
+
     return { fadeTargets };
+  }
+
+  createChromaticCorners(x, y, width, height, cornerSize = 14, cornerThickness = 2, channelOffset = 2) {
+    const cornersR = this.add.graphics().setAlpha(0);
+    const cornersG = this.add.graphics().setAlpha(0);
+    const cornersB = this.add.graphics().setAlpha(0);
+
+    const drawChannel = (graphics, color, offsetX, offsetY) => {
+      graphics.clear();
+      graphics.lineStyle(cornerThickness, colorToNumber(color), 1);
+      const cx = x + offsetX;
+      const cy = y + offsetY;
+      graphics.beginPath();
+      graphics.moveTo(cx + width - cornerSize, cy);
+      graphics.lineTo(cx + width, cy);
+      graphics.lineTo(cx + width, cy + cornerSize);
+      graphics.strokePath();
+      graphics.beginPath();
+      graphics.moveTo(cx, cy + height - cornerSize);
+      graphics.lineTo(cx, cy + height);
+      graphics.lineTo(cx + cornerSize, cy + height);
+      graphics.strokePath();
+    };
+
+    drawChannel(cornersR, '#ff2a5f', -channelOffset, 0);
+    drawChannel(cornersG, '#2be080', 0, 0);
+    drawChannel(cornersB, '#00f5ff', channelOffset, 0);
+
+    const layers = [cornersR, cornersG, cornersB];
+
+    const glitchIn = () => {
+      this.tweens.killTweensOf(layers);
+      this.tweens.chain({
+        targets: cornersR,
+        tweens: [
+          { alpha: 1, duration: 40 },
+          { alpha: 0.2, duration: 30 },
+          { alpha: 1, duration: 40 },
+          { alpha: 0.4, duration: 25 },
+          { alpha: 1, duration: 60 }
+        ]
+      });
+      this.tweens.add({ targets: cornersG, alpha: 1, delay: 30, duration: 150 });
+      this.tweens.add({ targets: cornersB, alpha: 1, delay: 60, duration: 150 });
+    };
+
+    const glitchOut = () => {
+      this.tweens.killTweensOf(layers);
+      this.tweens.add({ targets: layers, alpha: 0, duration: 100 });
+    };
+
+    return { layers, glitchIn, glitchOut };
   }
 
   createSecondaryButtons(region) {
@@ -195,9 +252,10 @@ export class MainScene extends Phaser.Scene {
       { text: 'CONFIGURACIÓN', scene: 'SettingsScene' }
     ];
     const gap = 32;
-    const textStyle = { fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.38)', letterSpacing: 2 };
+    const textStyle = { fontFamily: FONTS.GAME, fontSize: '16px', color: COLORS.textPrimary, letterSpacing: 2 };
     const measuringTexts = labels.map((item) => this.add.text(0, -1000, item.text, textStyle));
     const widths = measuringTexts.map((text) => text.width);
+    const textHeight = measuringTexts[0].height; // misma fuente/tamaño para todos, basta medir uno
     for (const text of measuringTexts) {
       text.destroy();
     }
@@ -209,19 +267,40 @@ export class MainScene extends Phaser.Scene {
     for (let i = 0; i < labels.length; i += 1) {
       const item = labels[i];
       const centerX = currentX + widths[i] / 2;
-      const text = this.add.text(centerX, region.y, item.text, textStyle).setOrigin(0.5, 0);
-      const underline = this.add.rectangle(centerX, region.y + 18, widths[i], 1, colorToNumber('rgba(255,255,255,0.5)'), 1).setVisible(false);
+
+      const padding = { x: 10, y: 6 };
+      const boxX = centerX - widths[i] / 2 - padding.x;
+      const boxY = region.y - padding.y;
+      const boxW = widths[i] + padding.x * 2;
+      const boxH = textHeight + padding.y * 2; // antes: 24 + padding.y * 2
+      const radius = 4;
+
+      const background = this.add.graphics();
+      const drawBackground = (fillColor = null) => {
+        background.clear();
+        if (fillColor) {
+          background.fillStyle(colorToNumber(fillColor), 1);
+          background.fillRoundedRect(boxX, boxY, boxW, boxH, radius);
+        }
+      };
+
+      const text = this.add.text(centerX, region.y, item.text, textStyle).setOrigin(0.5, 0).setDepth(1);
+
+      const { glitchIn, glitchOut } = this.createChromaticCorners(boxX, boxY, boxW, boxH, 8, 1, 1);
+
       text.setInteractive({ useHandCursor: true });
       text.on('pointerover', () => {
-        text.setColor('rgba(255,255,255,0.8)');
-        underline.setVisible(true);
+        text.setColor(COLORS.buttonActive);
+        drawBackground(COLORS.black);
+        glitchIn();
       });
       text.on('pointerout', () => {
-        text.setColor('rgba(255,255,255,0.38)');
-        underline.setVisible(false);
+        text.setColor(COLORS.textPrimary);
+        drawBackground();
+        glitchOut();
       });
       text.on('pointerdown', () => this.scene.start(item.scene));
-      buttons.push({ text, underline });
+      buttons.push({ text, background });
       currentX += widths[i] + gap;
     }
 
